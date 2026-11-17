@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "874243639130",
+    "firebase_url": "https://pen-patrol-db-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "pen-patrol-db",
+    "storage_bucket": "pen-patrol-db.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:874243639130:android:051ebdaa4e0fa3db879563",
+        "android_client_info": {
+          "package_name": "com.penpatrol.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKwE3v77fFIKLTOv5DRL5EhdE8pRbKwsM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

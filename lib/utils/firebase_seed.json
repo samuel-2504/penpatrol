@@ -1,0 +1,28 @@
+{
+  "thermal_sensor": {
+    "frame": [25.0, 25.1, 25.3, 26.0],
+    "min_temp": 20.0,
+    "max_temp": 35.0,
+    "avg_temp": 27.5,
+    "last_updated": 1700000000000
+  },
+  "disinfection_tunnel": {
+    "motion_detected": false,
+    "spray_active": false,
+    "mode": "AUTO",
+    "spray_duration_seconds": 10
+  },
+  "spray_schedule": {
+    "auto_enabled": true
+  },
+  "alerts": {
+    "active": {
+      "high_temp_alert": {
+        "triggered": false,
+        "avg_temp": 27.5,
+        "threshold": 37.0,
+        "message": "Temperature normal"
+      }
+    }
+  }
+}
