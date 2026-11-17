@@ -42,6 +42,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
     return Scaffold(
       appBar: TitleBar(
         screenName: 'Alerts',
+        showNotifications: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
               color: Colors.white, size: 20),

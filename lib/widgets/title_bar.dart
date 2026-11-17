@@ -10,8 +10,14 @@ import '../screens/alerts_screen.dart';
 class TitleBar extends StatelessWidget implements PreferredSizeWidget {
   final String screenName;
   final Widget? leading;
+  final bool showNotifications;
 
-  const TitleBar({super.key, required this.screenName, this.leading});
+  const TitleBar({
+    super.key,
+    required this.screenName,
+    this.leading,
+    this.showNotifications = true,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(64);
@@ -62,45 +68,47 @@ class TitleBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         // --- NOTIFICATION BELL ---
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            IconButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AlertsScreen()),
-                );
-              },
-              icon:
-                  const Icon(Icons.notifications_rounded, color: Colors.white),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.08),
-                shape: const CircleBorder(),
+        if (showNotifications && screenName.toLowerCase() != 'alerts') ...[
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AlertsScreen()),
+                  );
+                },
+                icon:
+                    const Icon(Icons.notifications_rounded, color: Colors.white),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.08),
+                  shape: const CircleBorder(),
+                ),
               ),
-            ),
-            if (unreadCount > 0)
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: AppColors.orange,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '$unreadCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+              if (unreadCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: AppColors.orange,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '$unreadCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
-        ),
-        const SizedBox(width: 8),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
         // --- THEME TOGGLE ---
         Padding(
           padding: const EdgeInsets.only(right: 16),

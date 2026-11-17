@@ -69,13 +69,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final muted = context.extras.muted;
 
     return Scaffold(
-      appBar: TitleBar(
+      appBar: const TitleBar(
         screenName: 'Activity History',
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
       ),
       body: ResponsiveScaffoldBody(
         child: RefreshIndicator(

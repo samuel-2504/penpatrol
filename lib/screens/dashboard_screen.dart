@@ -23,7 +23,14 @@ class DashboardScreen extends StatelessWidget {
     final alerts = context.watch<AlertsProvider>();
     final muted = context.extras.muted;
     final pad = Responsive.pagePadding(context);
-    final cols = Responsive.columns(context);
+    final activeSensors = [
+      dash.mlx90640Conn,
+      dash.pir1Conn,
+      dash.pir2Conn,
+      dash.pir3Conn,
+      dash.pir4Conn,
+      dash.pir5Conn,
+    ].where((c) => c).length;
 
     return Scaffold(
       appBar: const TitleBar(
@@ -46,36 +53,12 @@ class DashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Status pills grid
-            GridView.count(
-              crossAxisCount: cols,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 2.6,
-              children: [
-                StatusPill(label: 'Foot Bath', status: dash.footBathStatus),
-                StatusPill(label: 'Swine Bath', status: dash.swineBathStatus),
-                StatusPill(label: 'Tunnel', status: dash.tunnelStatus),
-                
-                // Interactive Sensors Status Pill
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SensorStatusScreen(),
-                      ),
-                    );
-                  },
-                  child: StatusPill(
-                    label: 'Sensors',
-                    status: dash.sensorsStatus,
-                  ),
-                ),
-              ],
-            ),
+            // Status pills - 3 rows for even presentation
+            StatusPill(label: 'Foot Bath', status: dash.footBathStatus),
+            const SizedBox(height: 10),
+            StatusPill(label: 'Swine Bath', status: dash.swineBathStatus),
+            const SizedBox(height: 10),
+            StatusPill(label: 'Tunnel', status: dash.tunnelStatus),
 
             const SizedBox(height: 24),
             _Card(
@@ -221,6 +204,202 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     );
                   }),
+                ],
+              ),
+            ),
+
+            // --- SENSORS SECTION ---
+            const SizedBox(height: 16),
+            _Card(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.teal.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.sensors_rounded,
+                              color: AppColors.teal,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sensors',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '$activeSensors of 6 online',
+                                style: TextStyle(color: muted, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: (dash.sensorsStatus == 'READY'
+                                      ? AppColors.teal
+                                      : AppColors.amber)
+                                  .withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: (dash.sensorsStatus == 'READY'
+                                        ? AppColors.teal
+                                        : AppColors.amber)
+                                    .withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Text(
+                              dash.sensorsStatus,
+                              style: TextStyle(
+                                color: dash.sensorsStatus == 'READY'
+                                    ? AppColors.teal
+                                    : AppColors.amber,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'monospace',
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.arrow_forward_ios_rounded,
+                                size: 14),
+                            color: muted,
+                            tooltip: 'Sensor Diagnostics',
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const SensorStatusScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(color: context.extras.border, height: 1),
+                  const SizedBox(height: 8),
+                  if (Responsive.isMobile(context))
+                    Column(
+                      children: [
+                        _SensorTile(
+                          title: 'Thermal Camera',
+                          subtitle: 'MLX90640',
+                          isConnected: dash.mlx90640Conn,
+                          icon: Icons.videocam_rounded,
+                        ),
+                        _SensorTile(
+                          title: 'PIR Sensor 1',
+                          subtitle: 'Pen 1',
+                          isConnected: dash.pir1Conn,
+                          icon: Icons.motion_photos_on_rounded,
+                        ),
+                        _SensorTile(
+                          title: 'PIR Sensor 2',
+                          subtitle: 'Pen 2',
+                          isConnected: dash.pir2Conn,
+                          icon: Icons.motion_photos_on_rounded,
+                        ),
+                        _SensorTile(
+                          title: 'PIR Sensor 3',
+                          subtitle: 'Pen 3',
+                          isConnected: dash.pir3Conn,
+                          icon: Icons.motion_photos_on_rounded,
+                        ),
+                        _SensorTile(
+                          title: 'PIR Sensor 4',
+                          subtitle: 'Pen 4',
+                          isConnected: dash.pir4Conn,
+                          icon: Icons.motion_photos_on_rounded,
+                        ),
+                        _SensorTile(
+                          title: 'PIR Sensor 5',
+                          subtitle: 'Corridor',
+                          isConnected: dash.pir5Conn,
+                          icon: Icons.motion_photos_on_rounded,
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            children: [
+                              _SensorTile(
+                                title: 'Thermal Camera',
+                                subtitle: 'MLX90640',
+                                isConnected: dash.mlx90640Conn,
+                                icon: Icons.videocam_rounded,
+                              ),
+                              _SensorTile(
+                                title: 'PIR Sensor 1',
+                                subtitle: 'Pen 1',
+                                isConnected: dash.pir1Conn,
+                                icon: Icons.motion_photos_on_rounded,
+                              ),
+                              _SensorTile(
+                                title: 'PIR Sensor 2',
+                                subtitle: 'Pen 2',
+                                isConnected: dash.pir2Conn,
+                                icon: Icons.motion_photos_on_rounded,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              _SensorTile(
+                                title: 'PIR Sensor 3',
+                                subtitle: 'Pen 3',
+                                isConnected: dash.pir3Conn,
+                                icon: Icons.motion_photos_on_rounded,
+                              ),
+                              _SensorTile(
+                                title: 'PIR Sensor 4',
+                                subtitle: 'Pen 4',
+                                isConnected: dash.pir4Conn,
+                                icon: Icons.motion_photos_on_rounded,
+                              ),
+                              _SensorTile(
+                                title: 'PIR Sensor 5',
+                                subtitle: 'Corridor',
+                                isConnected: dash.pir5Conn,
+                                icon: Icons.motion_photos_on_rounded,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -718,6 +897,92 @@ class _MiniAlertRow extends StatelessWidget {
           Text(
             '${alert.timestamp.hour.toString().padLeft(2, '0')}:${alert.timestamp.minute.toString().padLeft(2, '0')}',
             style: TextStyle(color: muted, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SensorTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final bool isConnected;
+  final IconData icon;
+
+  const _SensorTile({
+    required this.title,
+    required this.subtitle,
+    required this.isConnected,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = context.extras.muted;
+    final color = isConnected ? AppColors.teal : AppColors.red;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(color: muted, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  isConnected ? 'ONLINE' : 'OFFLINE',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'monospace',
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
