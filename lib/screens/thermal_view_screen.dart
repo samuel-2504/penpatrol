@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../theme/app_theme.dart';
 import '../widgets/title_bar.dart';
@@ -28,8 +29,11 @@ class _ThermalViewScreenState extends State<ThermalViewScreen> {
   }
 
   void _connectToFirebaseStream() {
-    final DatabaseReference ref =
-        FirebaseDatabase.instance.ref('thermal_sensor');
+    final DatabaseReference ref = FirebaseDatabase.instanceFor(
+      app: Firebase.app(),
+      databaseURL:
+          'https://pen-patrol-db-default-rtdb.asia-southeast1.firebasedatabase.app/',
+    ).ref('thermal_sensor');
 
     _thermalSubscription = ref.onValue.listen(
       (DatabaseEvent event) {
@@ -38,21 +42,26 @@ class _ThermalViewScreenState extends State<ThermalViewScreen> {
             final Map<dynamic, dynamic> dataMap = 
                 event.snapshot.value as Map<dynamic, dynamic>;
             
-            final List<dynamic> rawFrame = dataMap['frame'] as List<dynamic>;
-            final num timestampRaw = dataMap['timestamp'] as num;
+            final List<dynamic>? rawFrame =
+                (dataMap['frame'] ?? dataMap['grid']) as List<dynamic>?;
+            final num timestampRaw =
+                (dataMap['timestamp'] as num?) ?? DateTime.now().millisecondsSinceEpoch;
             
-            final parsedData = rawFrame.map((e) => (e as num).toDouble()).toList();
-            
-            final dateTime = DateTime.fromMillisecondsSinceEpoch(
-                timestampRaw.toInt());
-            
-            setState(() {
-              _thermalData = parsedData;
-              _lastTimestamp = dateTime;
-              _isConnected = true;
-            });
-            
-            _generateRawImage(parsedData);
+            if (rawFrame != null && rawFrame.isNotEmpty) {
+              final parsedData =
+                  rawFrame.map((e) => (e as num).toDouble()).toList();
+              
+              final dateTime = DateTime.fromMillisecondsSinceEpoch(
+                  timestampRaw.toInt());
+              
+              setState(() {
+                _thermalData = parsedData;
+                _lastTimestamp = dateTime;
+                _isConnected = true;
+              });
+              
+              _generateRawImage(parsedData);
+            }
           } catch (e) {
             debugPrint('Error parsing thermal data: $e');
           }

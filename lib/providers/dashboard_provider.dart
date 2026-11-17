@@ -1,15 +1,23 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class DashboardProvider extends ChangeNotifier {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
+  final DatabaseReference _dbRef = FirebaseDatabase.instanceFor(
+    app: Firebase.app(),
+    databaseURL:
+        'https://pen-patrol-db-default-rtdb.asia-southeast1.firebasedatabase.app/',
+  ).ref();
 
   StreamSubscription<DatabaseEvent>? _thermalSub;
   StreamSubscription<DatabaseEvent>? _tunnelSub;
   StreamSubscription<DatabaseEvent>? _footBathSub;
   StreamSubscription<DatabaseEvent>? _swineBathSub;
   StreamSubscription<DatabaseEvent>? _hardwareSub;
+
+  Timer? _footBathTimer;
+  int footBathRemainingSeconds = 0;
 
   // --- HARDWARE CONNECTION STATUSES ---
   bool pump1PenConn = false;
@@ -19,12 +27,19 @@ class DashboardProvider extends ChangeNotifier {
   bool valve3FBathConn = false;
   bool pump1TunnelConn = false;
 
-  bool pir1Conn = false;
-  bool pir2Conn = false;
-  bool pir3Conn = false;
-  bool pir4Conn = false;
-  bool pir5Conn = false;
+  bool ultrasonic1Conn = false;
+  bool ultrasonic2Conn = false;
+  bool ultrasonic3Conn = false;
+  bool ultrasonic4Conn = false;
+  bool ultrasonic5Conn = false;
   bool mlx90640Conn = false;
+
+  // Backward compatibility getters
+  bool get pir1Conn => ultrasonic1Conn;
+  bool get pir2Conn => ultrasonic2Conn;
+  bool get pir3Conn => ultrasonic3Conn;
+  bool get pir4Conn => ultrasonic4Conn;
+  bool get pir5Conn => ultrasonic5Conn;
 
   // --- OPERATIONAL STATES ---
   bool footBathOn = false;
@@ -52,11 +67,11 @@ class DashboardProvider extends ChangeNotifier {
         valve3FBathConn = (data['valve3_fBath'] as bool?) ?? false;
         pump1TunnelConn = (data['pump1_tunnel'] as bool?) ?? false;
 
-        pir1Conn = (data['pir_1'] as bool?) ?? false;
-        pir2Conn = (data['pir_2'] as bool?) ?? false;
-        pir3Conn = (data['pir_3'] as bool?) ?? false;
-        pir4Conn = (data['pir_4'] as bool?) ?? false;
-        pir5Conn = (data['pir_5'] as bool?) ?? false;
+        ultrasonic1Conn = ((data['ultrasonic_1'] ?? data['pir_1']) as bool?) ?? false;
+        ultrasonic2Conn = ((data['ultrasonic_2'] ?? data['pir_2']) as bool?) ?? false;
+        ultrasonic3Conn = ((data['ultrasonic_3'] ?? data['pir_3']) as bool?) ?? false;
+        ultrasonic4Conn = ((data['ultrasonic_4'] ?? data['pir_4']) as bool?) ?? false;
+        ultrasonic5Conn = ((data['ultrasonic_5'] ?? data['pir_5']) as bool?) ?? false;
         mlx90640Conn = (data['mlx90640'] as bool?) ?? false;
 
         notifyListeners();
@@ -70,8 +85,9 @@ class DashboardProvider extends ChangeNotifier {
         temperature = (data['avg_temp'] as num?)?.toDouble() ?? temperature;
         humidity = (data['humidity'] as num?)?.toDouble() ?? humidity;
 
-        if (data['grid'] is List) {
-          thermalGrid = (data['grid'] as List)
+        final rawGrid = (data['grid'] ?? data['frame']) as List?;
+        if (rawGrid != null) {
+          thermalGrid = rawGrid
               .map((e) => (e as num).toDouble())
               .toList();
         }
@@ -92,7 +108,13 @@ class DashboardProvider extends ChangeNotifier {
     _footBathSub = _dbRef.child('controls/foot_bath').onValue.listen((event) {
       if (event.snapshot.value is Map) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-        footBathOn = (data['active'] as bool?) ?? false;
+        final bool active = (data['active'] as bool?) ?? false;
+        if (!active && footBathOn && _footBathTimer != null) {
+          _footBathTimer?.cancel();
+          _footBathTimer = null;
+          footBathRemainingSeconds = 0;
+        }
+        footBathOn = active;
         notifyListeners();
       }
     });
@@ -125,20 +147,70 @@ class DashboardProvider extends ChangeNotifier {
   }
 
   String get sensorsStatus {
-    final allConnected = pir1Conn && pir2Conn && pir3Conn && pir4Conn && pir5Conn && mlx90640Conn;
+    final allConnected = ultrasonic1Conn &&
+        ultrasonic2Conn &&
+        ultrasonic3Conn &&
+        ultrasonic4Conn &&
+        ultrasonic5Conn &&
+        mlx90640Conn;
     return allConnected ? 'READY' : 'OFFLINE';
   }
 
   // --- CONTROL COMMANDS SENT TO ARDUINO VIA FIREBASE ---
 
-  Future<void> toggleFootBath(bool v) async {
-    footBathOn = v;
+  Future<void> triggerFootBath({int seconds = 10}) async {
+    _footBathTimer?.cancel();
+    footBathOn = true;
+    footBathRemainingSeconds = seconds;
     notifyListeners();
-    await _dbRef.child('controls/foot_bath').set({
-      'active': v,
-      'pump2_tunnel': v,
-      'valve3_fBath': v ? 180 : 0, // 180 degrees customized servo
+
+    try {
+      await _dbRef.child('controls/foot_bath').set({
+        'active': true,
+        'pump2_tunnel': true,
+        'valve3_fBath': 180, // 180 degrees customized servo
+      });
+    } catch (e) {
+      debugPrint('Error triggering foot bath: $e');
+    }
+
+    _footBathTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (footBathRemainingSeconds > 1) {
+        footBathRemainingSeconds--;
+        notifyListeners();
+      } else {
+        timer.cancel();
+        _footBathTimer = null;
+        footBathRemainingSeconds = 0;
+        await stopFootBath();
+      }
     });
+  }
+
+  Future<void> stopFootBath() async {
+    _footBathTimer?.cancel();
+    _footBathTimer = null;
+    footBathRemainingSeconds = 0;
+    footBathOn = false;
+    notifyListeners();
+
+    try {
+      await _dbRef.child('controls/foot_bath').set({
+        'active': false,
+        'pump2_tunnel': false,
+        'valve3_fBath': 0,
+      });
+    } catch (e) {
+      debugPrint('Error stopping foot bath: $e');
+    }
+  }
+
+  Future<void> toggleFootBath(bool v) async {
+    if (v) {
+      await triggerFootBath(seconds: 10);
+    } else {
+      await stopFootBath();
+    }
   }
 
   // Trigger 5-Second System Diagnostic Test
@@ -172,6 +244,7 @@ class DashboardProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _footBathTimer?.cancel();
     _hardwareSub?.cancel();
     _thermalSub?.cancel();
     _tunnelSub?.cancel();

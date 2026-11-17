@@ -8,13 +8,13 @@ import '../screens/alerts_screen.dart';
 /// Custom app bar used on every non-splash screen.
 /// Background is a constant deep blue regardless of theme.
 class TitleBar extends StatelessWidget implements PreferredSizeWidget {
-  final String screenName;
+  final String? screenName;
   final Widget? leading;
   final bool showNotifications;
 
   const TitleBar({
     super.key,
-    required this.screenName,
+    this.screenName,
     this.leading,
     this.showNotifications = true,
   });
@@ -31,44 +31,21 @@ class TitleBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: AppColors.titleBarBlue,
       elevation: 0,
       automaticallyImplyLeading: false,
-      titleSpacing: 12,
+      titleSpacing: 16,
       leadingWidth: leading == null ? 0 : null,
       leading: leading,
-      title: Row(
-        children: [
-          Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(
-              color: AppColors.teal,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Flexible(
-            child: RichText(
-              overflow: TextOverflow.ellipsis,
-              text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.lightBlueText,
-                ),
-                children: [
-                  const TextSpan(text: 'Pen Patrol '),
-                  TextSpan(
-                    text: screenName,
-                    style: const TextStyle(fontWeight: FontWeight.w400),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      title: const Text(
+        'Pen Patrol',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: AppColors.lightBlueText,
+          letterSpacing: 0.4,
+        ),
       ),
       actions: [
         // --- NOTIFICATION BELL ---
-        if (showNotifications && screenName.toLowerCase() != 'alerts') ...[
+        if (showNotifications && screenName?.toLowerCase() != 'alerts') ...[
           Stack(
             alignment: Alignment.center,
             children: [

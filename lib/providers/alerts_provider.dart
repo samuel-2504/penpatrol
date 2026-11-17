@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../models/alert.dart';
 
@@ -8,7 +9,11 @@ class AlertsProvider extends ChangeNotifier {
   String? _errorMessage;
 
   // Firebase Realtime Database reference for alerts
-  final DatabaseReference _db = FirebaseDatabase.instance.ref('alerts');
+  final DatabaseReference _db = FirebaseDatabase.instanceFor(
+    app: Firebase.app(),
+    databaseURL:
+        'https://pen-patrol-db-default-rtdb.asia-southeast1.firebasedatabase.app/',
+  ).ref('alerts');
 
   List<Alert> get alerts => List.unmodifiable(_alerts);
   bool get isLoading => _isLoading;

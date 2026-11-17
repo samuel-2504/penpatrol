@@ -1,10 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import '../models/history_log.dart';
 
 class HistoryProvider extends ChangeNotifier {
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
+  final DatabaseReference _dbRef = FirebaseDatabase.instanceFor(
+    app: Firebase.app(),
+    databaseURL:
+        'https://pen-patrol-db-default-rtdb.asia-southeast1.firebasedatabase.app/',
+  ).ref();
   StreamSubscription<DatabaseEvent>? _logsSub;
 
   List<HistoryLog> _logs = [];

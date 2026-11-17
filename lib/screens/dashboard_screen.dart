@@ -25,11 +25,11 @@ class DashboardScreen extends StatelessWidget {
     final pad = Responsive.pagePadding(context);
     final activeSensors = [
       dash.mlx90640Conn,
-      dash.pir1Conn,
-      dash.pir2Conn,
-      dash.pir3Conn,
-      dash.pir4Conn,
-      dash.pir5Conn,
+      dash.ultrasonic1Conn,
+      dash.ultrasonic2Conn,
+      dash.ultrasonic3Conn,
+      dash.ultrasonic4Conn,
+      dash.ultrasonic5Conn,
     ].where((c) => c).length;
 
     return Scaffold(
@@ -167,8 +167,14 @@ class DashboardScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Manual override control',
-                                style: TextStyle(color: muted, fontSize: 13),
+                                dash.footBathOn
+                                    ? 'Active • ${dash.footBathRemainingSeconds}s remaining'
+                                    : 'Push button to run 10s cycle',
+                                style: TextStyle(
+                                  color: dash.footBathOn ? AppColors.teal : muted,
+                                  fontSize: 13,
+                                  fontWeight: dash.footBathOn ? FontWeight.w600 : FontWeight.normal,
+                                ),
                               ),
                             ],
                           ),
@@ -179,27 +185,46 @@ class DashboardScreen extends StatelessWidget {
                   Builder(builder: (context) {
                     final bool isActive = dash.footBathOn;
 
-                    return ElevatedButton(
+                    return ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isActive
                             ? AppColors.teal
-                            : muted.withValues(alpha: 0.15),
-                        foregroundColor: isActive ? Colors.white : muted,
-                        elevation: 0,
+                            : AppColors.teal.withValues(alpha: 0.15),
+                        foregroundColor: isActive ? Colors.white : AppColors.teal,
+                        elevation: isActive ? 2 : 0,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
+                            horizontal: 16, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(
+                            color: AppColors.teal.withValues(alpha: isActive ? 1.0 : 0.5),
+                            width: 1.5,
+                          ),
                         ),
                       ),
                       onPressed: () {
-                        context.read<DashboardProvider>().toggleFootBath(!isActive);
+                        if (isActive) {
+                          context.read<DashboardProvider>().stopFootBath();
+                        } else {
+                          context.read<DashboardProvider>().triggerFootBath(seconds: 10);
+                        }
                       },
-                      child: Text(
-                        isActive ? 'ON' : 'OFF',
+                      icon: isActive
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Icon(Icons.touch_app_rounded, size: 18),
+                      label: Text(
+                        isActive ? '${dash.footBathRemainingSeconds}s' : 'PUSH',
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
+                          letterSpacing: 1.1,
                         ),
                       ),
                     );
@@ -314,34 +339,34 @@ class DashboardScreen extends StatelessWidget {
                           icon: Icons.videocam_rounded,
                         ),
                         _SensorTile(
-                          title: 'PIR Sensor 1',
+                          title: 'Ultrasonic Sensor 1',
                           subtitle: 'Pen 1',
-                          isConnected: dash.pir1Conn,
-                          icon: Icons.motion_photos_on_rounded,
+                          isConnected: dash.ultrasonic1Conn,
+                          icon: Icons.sensors_rounded,
                         ),
                         _SensorTile(
-                          title: 'PIR Sensor 2',
+                          title: 'Ultrasonic Sensor 2',
                           subtitle: 'Pen 2',
-                          isConnected: dash.pir2Conn,
-                          icon: Icons.motion_photos_on_rounded,
+                          isConnected: dash.ultrasonic2Conn,
+                          icon: Icons.sensors_rounded,
                         ),
                         _SensorTile(
-                          title: 'PIR Sensor 3',
+                          title: 'Ultrasonic Sensor 3',
                           subtitle: 'Pen 3',
-                          isConnected: dash.pir3Conn,
-                          icon: Icons.motion_photos_on_rounded,
+                          isConnected: dash.ultrasonic3Conn,
+                          icon: Icons.sensors_rounded,
                         ),
                         _SensorTile(
-                          title: 'PIR Sensor 4',
+                          title: 'Ultrasonic Sensor 4',
                           subtitle: 'Pen 4',
-                          isConnected: dash.pir4Conn,
-                          icon: Icons.motion_photos_on_rounded,
+                          isConnected: dash.ultrasonic4Conn,
+                          icon: Icons.sensors_rounded,
                         ),
                         _SensorTile(
-                          title: 'PIR Sensor 5',
+                          title: 'Ultrasonic Sensor 5',
                           subtitle: 'Corridor',
-                          isConnected: dash.pir5Conn,
-                          icon: Icons.motion_photos_on_rounded,
+                          isConnected: dash.ultrasonic5Conn,
+                          icon: Icons.sensors_rounded,
                         ),
                       ],
                     )
@@ -359,16 +384,16 @@ class DashboardScreen extends StatelessWidget {
                                 icon: Icons.videocam_rounded,
                               ),
                               _SensorTile(
-                                title: 'PIR Sensor 1',
+                                title: 'Ultrasonic Sensor 1',
                                 subtitle: 'Pen 1',
-                                isConnected: dash.pir1Conn,
-                                icon: Icons.motion_photos_on_rounded,
+                                isConnected: dash.ultrasonic1Conn,
+                                icon: Icons.sensors_rounded,
                               ),
                               _SensorTile(
-                                title: 'PIR Sensor 2',
+                                title: 'Ultrasonic Sensor 2',
                                 subtitle: 'Pen 2',
-                                isConnected: dash.pir2Conn,
-                                icon: Icons.motion_photos_on_rounded,
+                                isConnected: dash.ultrasonic2Conn,
+                                icon: Icons.sensors_rounded,
                               ),
                             ],
                           ),
@@ -378,22 +403,22 @@ class DashboardScreen extends StatelessWidget {
                           child: Column(
                             children: [
                               _SensorTile(
-                                title: 'PIR Sensor 3',
+                                title: 'Ultrasonic Sensor 3',
                                 subtitle: 'Pen 3',
-                                isConnected: dash.pir3Conn,
-                                icon: Icons.motion_photos_on_rounded,
+                                isConnected: dash.ultrasonic3Conn,
+                                icon: Icons.sensors_rounded,
                               ),
                               _SensorTile(
-                                title: 'PIR Sensor 4',
+                                title: 'Ultrasonic Sensor 4',
                                 subtitle: 'Pen 4',
-                                isConnected: dash.pir4Conn,
-                                icon: Icons.motion_photos_on_rounded,
+                                isConnected: dash.ultrasonic4Conn,
+                                icon: Icons.sensors_rounded,
                               ),
                               _SensorTile(
-                                title: 'PIR Sensor 5',
+                                title: 'Ultrasonic Sensor 5',
                                 subtitle: 'Corridor',
-                                isConnected: dash.pir5Conn,
-                                icon: Icons.motion_photos_on_rounded,
+                                isConnected: dash.ultrasonic5Conn,
+                                icon: Icons.sensors_rounded,
                               ),
                             ],
                           ),
@@ -586,11 +611,11 @@ class SensorStatusScreen extends StatelessWidget {
           padding: EdgeInsets.all(pad),
           children: [
             _buildSensorTile(context, 'Thermal Camera (MLX90640)', dash.mlx90640Conn),
-            _buildSensorTile(context, 'PIR Sensor 1 (Pen 1)', dash.pir1Conn),
-            _buildSensorTile(context, 'PIR Sensor 2 (Pen 2)', dash.pir2Conn),
-            _buildSensorTile(context, 'PIR Sensor 3 (Pen 3)', dash.pir3Conn),
-            _buildSensorTile(context, 'PIR Sensor 4 (Pen 4)', dash.pir4Conn),
-            _buildSensorTile(context, 'PIR Sensor 5 (Corridor)', dash.pir5Conn),
+            _buildSensorTile(context, 'Ultrasonic Sensor 1 (Pen 1)', dash.ultrasonic1Conn),
+            _buildSensorTile(context, 'Ultrasonic Sensor 2 (Pen 2)', dash.ultrasonic2Conn),
+            _buildSensorTile(context, 'Ultrasonic Sensor 3 (Pen 3)', dash.ultrasonic3Conn),
+            _buildSensorTile(context, 'Ultrasonic Sensor 4 (Pen 4)', dash.ultrasonic4Conn),
+            _buildSensorTile(context, 'Ultrasonic Sensor 5 (Corridor)', dash.ultrasonic5Conn),
           ],
         ),
       ),
