@@ -11,6 +11,8 @@ class CustomSlider extends StatelessWidget {
   final double max;
   final String unit;
   final ValueChanged<double> onChanged;
+  final int? divisions;
+  final String Function(double value)? valueFormatter;
 
   const CustomSlider({
     super.key,
@@ -20,6 +22,8 @@ class CustomSlider extends StatelessWidget {
     required this.max,
     required this.unit,
     required this.onChanged,
+    this.divisions,
+    this.valueFormatter,
   });
 
   @override
@@ -41,7 +45,8 @@ class CustomSlider extends StatelessWidget {
               ),
             ),
             Text(
-              '${value.toStringAsFixed(0)}$unit',
+              valueFormatter?.call(value) ??
+                  '${value.toStringAsFixed(0)}$unit',
               style: const TextStyle(
                 color: AppColors.yellow,
                 fontWeight: FontWeight.w700,
@@ -64,6 +69,7 @@ class CustomSlider extends StatelessWidget {
             value: value.clamp(min, max),
             min: min,
             max: max,
+            divisions: divisions,
             onChanged: onChanged,
           ),
         ),

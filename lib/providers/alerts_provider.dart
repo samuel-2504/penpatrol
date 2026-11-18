@@ -5,6 +5,14 @@ import 'package:firebase_database/firebase_database.dart';
 import '../models/alert.dart';
 
 class AlertsProvider extends ChangeNotifier {
+  static const List<String> _legacyDemoAlertIds = [
+    'alert_d1_1',
+    'alert_d1_2',
+    'alert_d1_3',
+    'alert_d1_4',
+    'alert_d1_5',
+  ];
+
   List<Alert> _alerts = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -24,6 +32,7 @@ class AlertsProvider extends ChangeNotifier {
 
   AlertsProvider() {
     _listenToAlerts();
+    unawaited(_removeLegacyDemoAlerts());
   }
 
   /// Real-time stream listener for Firebase Database alerts
@@ -36,37 +45,49 @@ class AlertsProvider extends ChangeNotifier {
     _alertsSub = _db.onValue.listen(
       (event) {
         _isLoading = false;
-        if (event.snapshot.value != null && event.snapshot.value is Map) {
-          final dataMap = event.snapshot.value as Map<dynamic, dynamic>;
-          final List<Alert> fetchedAlerts = dataMap.entries.map((entry) {
-            final Map<String, dynamic> alertData =
-                Map<String, dynamic>.from(entry.value as Map);
-            alertData['id'] = entry.key;
-            return Alert.fromJson(alertData);
-          }).toList();
-
-          fetchedAlerts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-          if (fetchedAlerts.isEmpty) {
-            _seedInitialAlerts();
-            return;
-          }
-          _alerts = fetchedAlerts;
-        } else {
-          _seedInitialAlerts();
-          return;
-        }
+        _alerts = _parseAlerts(event.snapshot.value);
         notifyListeners();
       },
       onError: (e) {
         _isLoading = false;
-        if (_alerts.isEmpty) {
-          _seedInitialAlerts();
-        } else {
-          _errorMessage = 'Failed to sync alerts with Firebase.';
-          notifyListeners();
-        }
+        _errorMessage = 'Failed to sync alerts with Firebase.';
+        debugPrint('Error syncing alerts: $e');
+        notifyListeners();
       },
     );
+  }
+
+  List<Alert> _parseAlerts(Object? value) {
+    if (value is! Map) return [];
+
+    final fetchedAlerts = <Alert>[];
+    for (final entry in value.entries) {
+      if (_legacyDemoAlertIds.contains(entry.key.toString())) continue;
+      if (entry.value is! Map) continue;
+
+      try {
+        final alertData = Map<String, dynamic>.from(entry.value as Map);
+        alertData['id'] = entry.key.toString();
+        fetchedAlerts.add(Alert.fromJson(alertData));
+      } on FormatException catch (e) {
+        debugPrint('Skipping invalid Firebase alert ${entry.key}: $e');
+      }
+    }
+
+    fetchedAlerts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return fetchedAlerts;
+  }
+
+  Future<void> _removeLegacyDemoAlerts() async {
+    try {
+      await _db.update({
+        for (final id in _legacyDemoAlertIds) id: null,
+      });
+    } catch (e) {
+      _errorMessage = 'Failed to remove legacy demo alerts from Firebase.';
+      debugPrint('Error removing legacy demo alerts: $e');
+      notifyListeners();
+    }
   }
 
   /// Fetch alerts from the database
@@ -77,94 +98,14 @@ class AlertsProvider extends ChangeNotifier {
 
     try {
       final snapshot = await _db.get();
-      
-      if (snapshot.exists && snapshot.value != null) {
-        final dataMap = snapshot.value as Map<dynamic, dynamic>;
-        
-        final List<Alert> fetchedAlerts = dataMap.entries.map((entry) {
-          final Map<String, dynamic> alertData = 
-              Map<String, dynamic>.from(entry.value as Map);
-          
-          // Ensure the Firebase node key is used as the document ID
-          alertData['id'] = entry.key;
-          return Alert.fromJson(alertData);
-        }).toList();
 
-        // Sort descending by timestamp (newest first)
-        fetchedAlerts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-        if (fetchedAlerts.isEmpty) {
-          _seedInitialAlerts();
-          return;
-        }
-        _alerts = fetchedAlerts;
-      } else {
-        _seedInitialAlerts();
-        return;
-      }
+      _alerts = _parseAlerts(snapshot.value);
     } catch (e) {
-      if (_alerts.isEmpty) {
-        _seedInitialAlerts();
-        return;
-      }
       _errorMessage = 'Failed to fetch alerts. Please try again.';
       debugPrint('Error fetching alerts: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
-    }
-  }
-
-  void _seedInitialAlerts() {
-    final now = DateTime.now();
-    final seeds = [
-      Alert(
-        id: 'alert_d1_1',
-        title: 'Elevated Heat Detected in Pen 2',
-        subtitle: 'MLX90640 recorded 38.8°C at north-east corner',
-        timestamp: now.subtract(const Duration(hours: 2, minutes: 15)),
-        severity: AlertSeverity.critical,
-        read: false,
-      ),
-      Alert(
-        id: 'alert_d1_2',
-        title: 'Foot Bath Cycle Complete',
-        subtitle: '10-second disinfection cycle finished via Servo 7 and Pump 2',
-        timestamp: now.subtract(const Duration(hours: 4, minutes: 30)),
-        severity: AlertSeverity.info,
-        read: false,
-      ),
-      Alert(
-        id: 'alert_d1_3',
-        title: 'Corridor Movement Detected',
-        subtitle: 'ToF Sensor VL53L1X sensed motion at 1.2m range',
-        timestamp: now.subtract(const Duration(hours: 6, minutes: 45)),
-        severity: AlertSeverity.warning,
-        read: true,
-      ),
-      Alert(
-        id: 'alert_d1_4',
-        title: 'Disinfection Tunnel Primed',
-        subtitle: 'Pump 2 (Relay 2) and Servo 6 ready for transport sanitization',
-        timestamp: now.subtract(const Duration(hours: 8, minutes: 20)),
-        severity: AlertSeverity.info,
-        read: true,
-      ),
-      Alert(
-        id: 'alert_d1_5',
-        title: 'Morning Swine Bath Finished',
-        subtitle: 'Servos 1-4 rotated and Pump 1 (Relay 1) cooling cycle executed',
-        timestamp: now.subtract(const Duration(hours: 11, minutes: 10)),
-        severity: AlertSeverity.info,
-        read: true,
-      ),
-    ];
-
-    _alerts = seeds;
-    _isLoading = false;
-    notifyListeners();
-
-    for (final a in seeds) {
-      _db.child(a.id).set(a.toJson()).catchError((_) {});
     }
   }
 
@@ -207,7 +148,7 @@ class AlertsProvider extends ChangeNotifier {
   /// Mark all alerts as read
   Future<void> markAllRead() async {
     final Map<String, dynamic> updates = {};
-    
+
     // Update local state and prepare Firebase batch updates
     for (final a in _alerts) {
       if (!a.read) {
@@ -216,7 +157,7 @@ class AlertsProvider extends ChangeNotifier {
         updates['${a.id}/read'] = true;
       }
     }
-    
+
     if (updates.isNotEmpty) {
       notifyListeners();
       try {
@@ -242,7 +183,7 @@ class AlertsProvider extends ChangeNotifier {
 
         // Save to Firebase
         await newRef.set(alertData);
-        
+
         // Add to local state (at the top of the list)
         _alerts.insert(0, Alert.fromJson(alertData));
         notifyListeners();

@@ -21,28 +21,28 @@ class DashboardProvider extends ChangeNotifier {
 
   // --- HARDWARE CONNECTION STATUSES ---
   // Sensors
-  bool ultrasonic1Conn = true;
-  bool ultrasonic2Conn = true;
-  bool ultrasonic3Conn = true;
-  bool ultrasonic4Conn = true;
-  bool tofConn = true;
-  bool mlx90640Conn = true;
+  bool ultrasonic1Conn = false;
+  bool ultrasonic2Conn = false;
+  bool ultrasonic3Conn = false;
+  bool ultrasonic4Conn = false;
+  bool tofConn = false;
+  bool mlx90640Conn = false;
 
   // Corner Servos 1-4 (Corners of the pen)
-  bool servo1Conn = true;
-  bool servo2Conn = true;
-  bool servo3Conn = true;
-  bool servo4Conn = true;
+  bool servo1Conn = false;
+  bool servo2Conn = false;
+  bool servo3Conn = false;
+  bool servo4Conn = false;
 
   // Customized Servos with Ball Valve (Act as solenoid valves)
-  bool servo5Conn = true; // Servo 5: Pump 1 to Pen
-  bool servo6Conn = true; // Servo 6: Pump 2 to Tunnel
-  bool servo7Conn = true; // Servo 7: Pump 2 to Foot Bath
-  bool servo8Conn = true; // Servo 8: Pump 2 to Pen (Disinfection)
+  bool servo5Conn = false; // Servo 5: Pump 1 to Pen
+  bool servo6Conn = false; // Servo 6: Pump 2 to Tunnel
+  bool servo7Conn = false; // Servo 7: Pump 2 to Foot Bath
+  bool servo8Conn = false; // Servo 8: Pump 2 to Pen (Disinfection)
 
   // Pumps & Relays
-  bool pump1Conn = true;  // Pump 1 (Relay 1)
-  bool pump2Conn = true;  // Pump 2 (Relay 2)
+  bool pump1Conn = false; // Pump 1 (Relay 1)
+  bool pump2Conn = false; // Pump 2 (Relay 2)
 
   // Backward compatibility getters
   bool get pump1PenConn => pump1Conn;
@@ -66,6 +66,7 @@ class DashboardProvider extends ChangeNotifier {
 
   double temperature = 0.0;
   double humidity = 0.0;
+  bool hasThermalData = false;
   List<double> thermalGrid = [];
 
   DashboardProvider() {
@@ -77,57 +78,81 @@ class DashboardProvider extends ChangeNotifier {
     _hardwareSub = _dbRef.child('hardware_status').onValue.listen((event) {
       if (event.snapshot.value is Map) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-        
+
         // Sensors
-        ultrasonic1Conn = ((data['ultrasonic_1'] ?? data['pir_1']) as bool?) ?? true;
-        ultrasonic2Conn = ((data['ultrasonic_2'] ?? data['pir_2']) as bool?) ?? true;
-        ultrasonic3Conn = ((data['ultrasonic_3'] ?? data['pir_3']) as bool?) ?? true;
-        ultrasonic4Conn = ((data['ultrasonic_4'] ?? data['pir_4']) as bool?) ?? true;
+        ultrasonic1Conn =
+            ((data['ultrasonic_1'] ?? data['pir_1']) as bool?) ?? false;
+        ultrasonic2Conn =
+            ((data['ultrasonic_2'] ?? data['pir_2']) as bool?) ?? false;
+        ultrasonic3Conn =
+            ((data['ultrasonic_3'] ?? data['pir_3']) as bool?) ?? false;
+        ultrasonic4Conn =
+            ((data['ultrasonic_4'] ?? data['pir_4']) as bool?) ?? false;
         tofConn = ((data['tof'] ??
                 data['vl53l1x'] ??
                 data['tof_vl53l1x'] ??
                 data['ultrasonic_5'] ??
                 data['pir_5']) as bool?) ??
-            true;
-        mlx90640Conn = (data['mlx90640'] as bool?) ?? true;
+            false;
+        mlx90640Conn = (data['mlx90640'] as bool?) ?? false;
 
         // Corner Servos 1-4 (Corners of the pen)
-        servo1Conn = ((data['servo_1'] ?? data['servo1']) as bool?) ?? true;
-        servo2Conn = ((data['servo_2'] ?? data['servo2']) as bool?) ?? true;
-        servo3Conn = ((data['servo_3'] ?? data['servo3']) as bool?) ?? true;
-        servo4Conn = ((data['servo_4'] ?? data['servo4']) as bool?) ?? true;
+        servo1Conn = ((data['servo_1'] ?? data['servo1']) as bool?) ?? false;
+        servo2Conn = ((data['servo_2'] ?? data['servo2']) as bool?) ?? false;
+        servo3Conn = ((data['servo_3'] ?? data['servo3']) as bool?) ?? false;
+        servo4Conn = ((data['servo_4'] ?? data['servo4']) as bool?) ?? false;
 
         // Ball Valve Servos 5-8 (Solenoid valves)
-        servo5Conn = ((data['servo_5'] ?? data['servo5'] ?? data['valve1_pen']) as bool?) ?? true;
-        servo6Conn = ((data['servo_6'] ?? data['servo6'] ?? data['valve2_tunnel']) as bool?) ?? true;
-        servo7Conn = ((data['servo_7'] ?? data['servo7'] ?? data['valve3_fBath']) as bool?) ?? true;
-        servo8Conn = ((data['servo_8'] ?? data['servo8'] ?? data['valve4_pen'] ?? data['pump8']) as bool?) ?? true;
+        servo5Conn = ((data['servo_5'] ?? data['servo5'] ?? data['valve1_pen'])
+                as bool?) ??
+            false;
+        servo6Conn = ((data['servo_6'] ??
+                data['servo6'] ??
+                data['valve2_tunnel']) as bool?) ??
+            false;
+        servo7Conn = ((data['servo_7'] ??
+                data['servo7'] ??
+                data['valve3_fBath']) as bool?) ??
+            false;
+        servo8Conn = ((data['servo_8'] ??
+                data['servo8'] ??
+                data['valve4_pen'] ??
+                data['pump8']) as bool?) ??
+            false;
 
         // Pumps (Relays 1 & 2)
-        pump1Conn = ((data['pump_1'] ?? data['pump1'] ?? data['pump1_pen'] ?? data['relay_1'] ?? data['relay1']) as bool?) ?? true;
-        pump2Conn = ((data['pump_2'] ?? data['pump2'] ?? data['pump2_tunnel'] ?? data['relay_2'] ?? data['relay2']) as bool?) ?? true;
+        pump1Conn = ((data['pump_1'] ??
+                data['pump1'] ??
+                data['pump1_pen'] ??
+                data['relay_1'] ??
+                data['relay1']) as bool?) ??
+            false;
+        pump2Conn = ((data['pump_2'] ??
+                data['pump2'] ??
+                data['pump2_tunnel'] ??
+                data['relay_2'] ??
+                data['relay2']) as bool?) ??
+            false;
 
         notifyListeners();
       } else {
-        // Seed default hardware status to Firebase so RTDB holds the master state
-        _dbRef.child('hardware_status').set({
-          'mlx90640': true,
-          'ultrasonic_1': true,
-          'ultrasonic_2': true,
-          'ultrasonic_3': true,
-          'ultrasonic_4': true,
-          'tof': true,
-          'servo_1': true,
-          'servo_2': true,
-          'servo_3': true,
-          'servo_4': true,
-          'servo_5': true,
-          'servo_6': true,
-          'servo_7': true,
-          'servo_8': true,
-          'pump_1': true,
-          'pump_2': true,
-        }).catchError((_) {});
+        ultrasonic1Conn = false;
+        ultrasonic2Conn = false;
+        ultrasonic3Conn = false;
+        ultrasonic4Conn = false;
+        tofConn = false;
+        mlx90640Conn = false;
+        servo1Conn = false;
+        servo2Conn = false;
+        servo3Conn = false;
+        servo4Conn = false;
+        servo5Conn = false;
+        servo6Conn = false;
+        servo7Conn = false;
+        servo8Conn = false;
+        pump1Conn = false;
+        pump2Conn = false;
+        notifyListeners();
       }
     });
 
@@ -137,32 +162,32 @@ class DashboardProvider extends ChangeNotifier {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
         temperature = (data['avg_temp'] as num?)?.toDouble() ?? temperature;
         humidity = (data['humidity'] as num?)?.toDouble() ?? humidity;
+        hasThermalData = data['avg_temp'] is num;
 
         final rawGrid = (data['grid'] ?? data['frame']) as List?;
         if (rawGrid != null && rawGrid.isNotEmpty) {
-          thermalGrid = rawGrid
-              .map((e) => (e as num).toDouble())
-              .toList();
+          thermalGrid = rawGrid.map((e) => (e as num).toDouble()).toList();
         }
         notifyListeners();
       } else {
-        // Seed initial live thermal data to Firebase so the camera feed is immediately available
-        _seedThermalToFirebase();
+        temperature = 0;
+        humidity = 0;
+        hasThermalData = false;
+        thermalGrid = [];
+        notifyListeners();
       }
     });
 
     // 3. Listen to disinfection_tunnel status
-    _tunnelSub = _dbRef.child('controls/disinfection_tunnel').onValue.listen((event) {
+    _tunnelSub =
+        _dbRef.child('controls/disinfection_tunnel').onValue.listen((event) {
       if (event.snapshot.value is Map) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
         tunnelOn = (data['spray_active'] as bool?) ?? false;
         notifyListeners();
       } else {
-        _dbRef.child('controls/disinfection_tunnel').set({
-          'spray_active': false,
-          'pump1_tunnel': false,
-          'valve2_tunnel': 0,
-        }).catchError((_) {});
+        tunnelOn = false;
+        notifyListeners();
       }
     });
 
@@ -179,11 +204,8 @@ class DashboardProvider extends ChangeNotifier {
         footBathOn = active;
         notifyListeners();
       } else {
-        _dbRef.child('controls/foot_bath').set({
-          'active': false,
-          'pump2_tunnel': false,
-          'valve3_fBath': 0,
-        }).catchError((_) {});
+        footBathOn = false;
+        notifyListeners();
       }
     });
 
@@ -191,37 +213,14 @@ class DashboardProvider extends ChangeNotifier {
     _swineBathSub = _dbRef.child('controls/swine_bath').onValue.listen((event) {
       if (event.snapshot.value is Map) {
         final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-        swineBathOn = (data['pump1_pen'] as bool?) ?? false; // True if pump is on
+        swineBathOn =
+            (data['pump1_pen'] as bool?) ?? false; // True if pump is on
         notifyListeners();
       } else {
-        _dbRef.child('controls/swine_bath').set({
-          'pump1_pen': false,
-          'valve1_pen': 0,
-          'intensity_percent': 0.0,
-          'duration_minutes': 0.0,
-        }).catchError((_) {});
+        swineBathOn = false;
+        notifyListeners();
       }
     });
-  }
-
-  void _seedThermalToFirebase() {
-    final List<double> defaultGrid = List.generate(768, (i) {
-      final x = i % 32;
-      final y = i ~/ 32;
-      final d1 = (x - 10) * (x - 10) + (y - 12) * (y - 12);
-      final d2 = (x - 22) * (x - 22) + (y - 8) * (y - 8);
-      double temp = 26.5 + (i % 7) * 0.15;
-      if (d1 < 36) temp += (36 - d1) * 0.32;
-      if (d2 < 25) temp += (25 - d2) * 0.45;
-      return double.parse(temp.toStringAsFixed(1));
-    });
-
-    _dbRef.child('thermal_sensor').set({
-      'avg_temp': 28.6,
-      'humidity': 62.0,
-      'grid': defaultGrid,
-      'timestamp': ServerValue.timestamp,
-    }).catchError((_) {});
   }
 
   // --- COMPONENT STATUS GETTERS ---

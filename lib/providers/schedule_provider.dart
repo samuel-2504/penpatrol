@@ -147,7 +147,7 @@ class ScheduleProvider extends ChangeNotifier {
   }
 
   /// Syncs active schedule parameters directly to the Arduino node in Firebase
-  /// Modifies `pump1_pen` (5V Relay) and `valve1_pen` (0-180° Servo on PCA9685)
+  /// Modifies `pump1_pen` (5V Relay) and `valve1_pen` (0-90° Servo on PCA9685)
   Future<void> _syncHardwareControlNode() async {
     final activeSchedule = _schedules.cast<Schedule?>().firstWhere(
           (s) => s != null && s.enabled,
@@ -155,12 +155,12 @@ class ScheduleProvider extends ChangeNotifier {
         );
 
     if (activeSchedule != null) {
-      // Map Intensity (0 - 100%) to PCA9685 Servo Angle (0° to 180°)
-      final int servoAngle = ((activeSchedule.intensity / 100.0) * 180.0).round();
+      // Map Intensity (0 - 100%) to PCA9685 Servo Angle (0° to 90°)
+      final int servoAngle = ((activeSchedule.intensity / 100.0) * 90.0).round();
 
       await _dbRef.child('controls/swine_bath').set({
         'pump1_pen': true, // Turn ON 5V relay for pump
-        'valve1_pen': servoAngle, // Open 180° High-Torque Servo via PCA9685
+        'valve1_pen': servoAngle, // Open Servo via PCA9685
         'intensity_percent': activeSchedule.intensity,
         'duration_minutes': activeSchedule.duration,
         'active_schedule_id': activeSchedule.id,

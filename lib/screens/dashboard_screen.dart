@@ -70,8 +70,10 @@ class DashboardScreen extends StatelessWidget {
                         child: _MetricTile(
                           icon: Icons.thermostat_rounded,
                           label: 'Temperature',
-                          value: '${dash.temperature.toStringAsFixed(1)}°C',
-                          color: dash.temperature > 38
+                          value: dash.hasThermalData
+                              ? '${dash.temperature.toStringAsFixed(1)}°C'
+                              : '--',
+                          color: dash.hasThermalData && dash.temperature > 38
                               ? AppColors.red
                               : AppColors.teal,
                         ),
@@ -85,7 +87,8 @@ class DashboardScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      border: Border.all(color: context.extras.border, width: 2),
+                      border:
+                          Border.all(color: context.extras.border, width: 2),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     // Pass the data down so the Stateful widget can react to changes
@@ -100,12 +103,14 @@ class DashboardScreen extends StatelessWidget {
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: AppColors.teal, width: 1.5),
+                        side:
+                            const BorderSide(color: AppColors.teal, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      icon: const Icon(Icons.fullscreen_rounded, color: AppColors.teal),
+                      icon: const Icon(Icons.fullscreen_rounded,
+                          color: AppColors.teal),
                       label: const Text(
                         'Detailed Thermal View',
                         style: TextStyle(
@@ -163,9 +168,12 @@ class DashboardScreen extends StatelessWidget {
                                     ? 'Active • ${dash.footBathRemainingSeconds}s remaining'
                                     : 'Press to open 10s cycle',
                                 style: TextStyle(
-                                  color: dash.footBathOn ? AppColors.teal : muted,
+                                  color:
+                                      dash.footBathOn ? AppColors.teal : muted,
                                   fontSize: 13,
-                                  fontWeight: dash.footBathOn ? FontWeight.w600 : FontWeight.normal,
+                                  fontWeight: dash.footBathOn
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
                                 ),
                               ),
                             ],
@@ -182,14 +190,16 @@ class DashboardScreen extends StatelessWidget {
                         backgroundColor: isActive
                             ? AppColors.teal
                             : AppColors.teal.withValues(alpha: 0.15),
-                        foregroundColor: isActive ? Colors.white : AppColors.teal,
+                        foregroundColor:
+                            isActive ? Colors.white : AppColors.teal,
                         elevation: isActive ? 2 : 0,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                           side: BorderSide(
-                            color: AppColors.teal.withValues(alpha: isActive ? 1.0 : 0.5),
+                            color: AppColors.teal
+                                .withValues(alpha: isActive ? 1.0 : 0.5),
                             width: 1.5,
                           ),
                         ),
@@ -198,7 +208,9 @@ class DashboardScreen extends StatelessWidget {
                         if (isActive) {
                           context.read<DashboardProvider>().stopFootBath();
                         } else {
-                          context.read<DashboardProvider>().triggerFootBath(seconds: 10);
+                          context
+                              .read<DashboardProvider>()
+                              .triggerFootBath(seconds: 10);
                         }
                       },
                       icon: isActive
@@ -273,7 +285,8 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.amber, width: 1.5),
+                      side:
+                          const BorderSide(color: AppColors.amber, width: 1.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -300,10 +313,13 @@ class DashboardScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Builder(builder: (context) {
               final now = DateTime.now();
-              final recent12hAlerts = alerts.alerts.where((a) {
-                final diff = now.difference(a.timestamp);
-                return !diff.isNegative && diff.inHours <= 12;
-              }).take(5).toList();
+              final recent12hAlerts = alerts.alerts
+                  .where((a) {
+                    final diff = now.difference(a.timestamp);
+                    return !diff.isNegative && diff.inHours <= 12;
+                  })
+                  .take(5)
+                  .toList();
 
               return _Card(
                 child: Column(
@@ -314,21 +330,27 @@ class DashboardScreen extends StatelessWidget {
                       children: [
                         Text(
                           'Recent Alerts (Last 12 Hours)',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: (recent12hAlerts.isNotEmpty ? AppColors.amber : AppColors.teal)
+                            color: (recent12hAlerts.isNotEmpty
+                                    ? AppColors.amber
+                                    : AppColors.teal)
                                 .withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             '${recent12hAlerts.length} recent',
                             style: TextStyle(
-                              color: recent12hAlerts.isNotEmpty ? AppColors.amber : AppColors.teal,
+                              color: recent12hAlerts.isNotEmpty
+                                  ? AppColors.amber
+                                  : AppColors.teal,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -385,8 +407,9 @@ class _HardwareSectionState extends State<_HardwareSection> {
   Widget build(BuildContext context) {
     final dash = context.watch<DashboardProvider>();
     final muted = context.extras.muted;
-    final totalOnline =
-        dash.onlineSensorsCount + dash.onlineServosCount + dash.onlinePumpsCount;
+    final totalOnline = dash.onlineSensorsCount +
+        dash.onlineServosCount +
+        dash.onlinePumpsCount;
 
     return _Card(
       child: Column(
@@ -431,8 +454,8 @@ class _HardwareSectionState extends State<_HardwareSection> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
                       color: (dash.sensorsStatus == 'READY'
                               ? AppColors.teal
@@ -461,16 +484,14 @@ class _HardwareSectionState extends State<_HardwareSection> {
                   ),
                   const SizedBox(width: 4),
                   IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios_rounded,
-                        size: 14),
+                    icon: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
                     color: muted,
                     tooltip: 'Hardware Diagnostics',
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              const SensorStatusScreen(),
+                          builder: (context) => const SensorStatusScreen(),
                         ),
                       );
                     },
@@ -701,7 +722,8 @@ class SensorStatusScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 15),
                 ),
                 Text(
                   subtitle,
@@ -798,18 +820,18 @@ class SensorStatusScreen extends StatelessWidget {
                 context, 'Sensors & Detectors', dash.onlineSensorsCount, 6),
             _buildTile(context, 'Thermal Camera', 'MLX90640 (32x24 Array)',
                 dash.mlx90640Conn, Icons.videocam_rounded),
-            _buildTile(context, 'Ultrasonic Sensor 1',
-                'Pen 1 Distance Monitor', dash.ultrasonic1Conn, Icons.sensors_rounded),
-            _buildTile(context, 'Ultrasonic Sensor 2',
-                'Pen 2 Distance Monitor', dash.ultrasonic2Conn, Icons.sensors_rounded),
-            _buildTile(context, 'Ultrasonic Sensor 3',
-                'Pen 3 Distance Monitor', dash.ultrasonic3Conn, Icons.sensors_rounded),
-            _buildTile(context, 'Ultrasonic Sensor 4',
-                'Pen 4 Distance Monitor', dash.ultrasonic4Conn, Icons.sensors_rounded),
-            _buildTile(context, 'ToF Sensor VL53L1X',
-                'Corridor Laser Ranging', dash.tofConn, Icons.sensors_rounded),
-
-            _buildSectionHeader(context, 'Corner Servos', cornerServosOnline, 4),
+            _buildTile(context, 'Ultrasonic Sensor 1', 'Pen 1 Distance Monitor',
+                dash.ultrasonic1Conn, Icons.sensors_rounded),
+            _buildTile(context, 'Ultrasonic Sensor 2', 'Pen 2 Distance Monitor',
+                dash.ultrasonic2Conn, Icons.sensors_rounded),
+            _buildTile(context, 'Ultrasonic Sensor 3', 'Pen 3 Distance Monitor',
+                dash.ultrasonic3Conn, Icons.sensors_rounded),
+            _buildTile(context, 'Ultrasonic Sensor 4', 'Pen 4 Distance Monitor',
+                dash.ultrasonic4Conn, Icons.sensors_rounded),
+            _buildTile(context, 'ToF Sensor VL53L1X', 'Corridor Laser Ranging',
+                dash.tofConn, Icons.sensors_rounded),
+            _buildSectionHeader(
+                context, 'Corner Servos', cornerServosOnline, 4),
             _buildTile(context, 'Corner Servo 1', 'Pen Corner 1 Actuator',
                 dash.servo1Conn, Icons.rotate_right_rounded),
             _buildTile(context, 'Corner Servo 2', 'Pen Corner 2 Actuator',
@@ -818,24 +840,34 @@ class SensorStatusScreen extends StatelessWidget {
                 dash.servo3Conn, Icons.rotate_right_rounded),
             _buildTile(context, 'Corner Servo 4', 'Pen Corner 4 Actuator',
                 dash.servo4Conn, Icons.rotate_right_rounded),
-
             _buildSectionHeader(context, 'Ball Valve Servos (Solenoid Valves)',
                 ballValvesOnline, 4),
-            _buildTile(context, 'Servo 5 (Ball Valve)',
-                'Pump 1 to Pen (Fresh Water)', dash.servo5Conn, Icons.tune_rounded),
-            _buildTile(context, 'Servo 6 (Ball Valve)',
-                'Pump 2 to Tunnel Disinfection', dash.servo6Conn, Icons.tune_rounded),
-            _buildTile(context, 'Servo 7 (Ball Valve)',
-                'Pump 2 to Foot Bath', dash.servo7Conn, Icons.tune_rounded),
-            _buildTile(context, 'Servo 8 (Ball Valve)',
-                'Pump 2 to Pen Disinfection', dash.servo8Conn, Icons.tune_rounded),
-
+            _buildTile(
+                context,
+                'Servo 5 (Ball Valve)',
+                'Pump 1 to Pen (Fresh Water)',
+                dash.servo5Conn,
+                Icons.tune_rounded),
+            _buildTile(
+                context,
+                'Servo 6 (Ball Valve)',
+                'Pump 2 to Tunnel Disinfection',
+                dash.servo6Conn,
+                Icons.tune_rounded),
+            _buildTile(context, 'Servo 7 (Ball Valve)', 'Pump 2 to Foot Bath',
+                dash.servo7Conn, Icons.tune_rounded),
+            _buildTile(
+                context,
+                'Servo 8 (Ball Valve)',
+                'Pump 2 to Pen Disinfection',
+                dash.servo8Conn,
+                Icons.tune_rounded),
             _buildSectionHeader(
                 context, 'Pumps & Relays', dash.onlinePumpsCount, 2),
-            _buildTile(context, 'Pump 1 (Relay 1)',
-                'Pen Water Supply Pump', dash.pump1Conn, Icons.power_rounded),
-            _buildTile(context, 'Pump 2 (Relay 2)',
-                'Disinfection Supply Pump', dash.pump2Conn, Icons.power_rounded),
+            _buildTile(context, 'Pump 1 (Relay 1)', 'Pen Water Supply Pump',
+                dash.pump1Conn, Icons.power_rounded),
+            _buildTile(context, 'Pump 2 (Relay 2)', 'Disinfection Supply Pump',
+                dash.pump2Conn, Icons.power_rounded),
             const SizedBox(height: 24),
           ],
         ),
@@ -977,7 +1009,9 @@ class _TestSprayScreenState extends State<TestSprayScreen> {
                     return RadioListTile<String>(
                       title: Text(system,
                           style: TextStyle(
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                               color: isSelected ? AppColors.teal : null)),
                       value: system,
                       // ignore: deprecated_member_use
@@ -1027,7 +1061,8 @@ class _TestSprayScreenState extends State<TestSprayScreen> {
                 height: 56,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isTesting ? context.extras.border : AppColors.amber,
+                    backgroundColor:
+                        _isTesting ? context.extras.border : AppColors.amber,
                     foregroundColor: _isTesting ? muted : Colors.black87,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -1286,7 +1321,8 @@ class _ThermalMapPreviewState extends State<ThermalMapPreview> {
       if (normalized < 0.5) {
         pixelColor = Color.lerp(Colors.blue, Colors.green, normalized * 2)!;
       } else {
-        pixelColor = Color.lerp(Colors.green, Colors.red, (normalized - 0.5) * 2)!;
+        pixelColor =
+            Color.lerp(Colors.green, Colors.red, (normalized - 0.5) * 2)!;
       }
 
       // Populate the RGBA array using the new float-based clamp math

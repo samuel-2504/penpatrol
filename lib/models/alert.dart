@@ -18,18 +18,30 @@ class Alert {
   });
 
   factory Alert.fromJson(Map<String, dynamic> json) {
+    final timestampValue = json['timestamp'];
+    final DateTime? timestamp;
+    if (timestampValue is num) {
+      timestamp = DateTime.fromMillisecondsSinceEpoch(timestampValue.toInt());
+    } else if (timestampValue is String) {
+      timestamp = DateTime.tryParse(timestampValue);
+    } else {
+      timestamp = null;
+    }
+
+    if (timestamp == null) {
+      throw const FormatException('Alert timestamp is missing or invalid.');
+    }
+
     return Alert(
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? 'Unknown Alert',
-      subtitle: json['subtitle']?.toString() ?? '', // Parse subtitle
-      timestamp: json['timestamp'] != null 
-          ? DateTime.parse(json['timestamp'].toString()) 
-          : DateTime.now(),
+      subtitle: json['subtitle']?.toString() ?? '',
+      timestamp: timestamp,
       severity: AlertSeverity.values.firstWhere(
         (e) => e.name == json['severity'],
         orElse: () => AlertSeverity.info,
       ),
-      read: json['read'] as bool? ?? false,
+      read: json['read'] is bool ? json['read'] as bool : false,
     );
   }
 
@@ -37,7 +49,7 @@ class Alert {
     return {
       'id': id,
       'title': title,
-      'subtitle': subtitle, // Save subtitle to Firebase
+      'subtitle': subtitle,
       'timestamp': timestamp.toIso8601String(),
       'severity': severity.name,
       'read': read,

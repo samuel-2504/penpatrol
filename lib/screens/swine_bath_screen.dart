@@ -8,6 +8,13 @@ import '../utils/responsive.dart';
 import '../widgets/title_bar.dart';
 import '../widgets/custom_slider.dart';
 
+String _formatDuration(double minutes) {
+  final totalSeconds = (minutes * 60).round();
+  final minuteText = (totalSeconds ~/ 60).toString().padLeft(2, '0');
+  final secondText = (totalSeconds % 60).toString().padLeft(2, '0');
+  return '$minuteText:$secondText';
+}
+
 class SwineBathScreen extends StatelessWidget {
   const SwineBathScreen({super.key});
 
@@ -129,7 +136,7 @@ class _ScheduleCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Valve: $servoAngle° (${schedule.intensity.toStringAsFixed(0)}%) · Pump: ${schedule.duration.toStringAsFixed(0)} min',
+                  'Valve: $servoAngle° (${schedule.intensity.toStringAsFixed(0)}%) · Pump: ${_formatDuration(schedule.duration)}',
                   style: const TextStyle(
                       color: AppColors.teal,
                       fontSize: 11,
@@ -230,7 +237,7 @@ class _AddScheduleFormState extends State<_AddScheduleForm> {
   Widget build(BuildContext context) {
     final muted = context.extras.muted;
     final border = context.extras.border;
-    final int calculatedAngle = ((_intensity / 100.0) * 180.0).round();
+    final int calculatedAngle = ((_intensity / 100.0) * 90.0).round();
 
     return Padding(
       padding: EdgeInsets.only(
@@ -353,20 +360,23 @@ class _AddScheduleFormState extends State<_AddScheduleForm> {
                   ),
                   const SizedBox(height: 16),
                   CustomSlider(
-                    label: 'Valve Intensity (PCA9685)',
+                    label: 'Valve Intensity (5% steps)',
                     value: _intensity,
                     min: 0,
                     max: 100,
                     unit: '%',
+                    divisions: 20,
                     onChanged: (val) => setState(() => _intensity = val),
                   ),
                   const SizedBox(height: 12),
                   CustomSlider(
-                    label: 'Pump Relay Duration',
+                    label: 'Pump Relay Duration (MM:SS, 30s steps)',
                     value: _duration,
-                    min: 1,
-                    max: 60,
-                    unit: ' min',
+                    min: 0.5,
+                    max: 30,
+                    unit: '',
+                    divisions: 59,
+                    valueFormatter: _formatDuration,
                     onChanged: (val) => setState(() => _duration = val),
                   ),
                 ],

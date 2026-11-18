@@ -18,7 +18,7 @@ class ThermalViewScreen extends StatefulWidget {
 class _ThermalViewScreenState extends State<ThermalViewScreen> {
   List<double> _thermalData = [];
   DateTime? _lastTimestamp;
-  ui.Image? _thermalImage; 
+  ui.Image? _thermalImage;
   StreamSubscription<DatabaseEvent>? _thermalSubscription;
   bool _isConnected = false;
 
@@ -39,27 +39,27 @@ class _ThermalViewScreenState extends State<ThermalViewScreen> {
       (DatabaseEvent event) {
         if (event.snapshot.value != null && mounted) {
           try {
-            final Map<dynamic, dynamic> dataMap = 
+            final Map<dynamic, dynamic> dataMap =
                 event.snapshot.value as Map<dynamic, dynamic>;
-            
+
             final List<dynamic>? rawFrame =
                 (dataMap['frame'] ?? dataMap['grid']) as List<dynamic>?;
-            final num timestampRaw =
-                (dataMap['timestamp'] as num?) ?? DateTime.now().millisecondsSinceEpoch;
-            
+            final num? timestampRaw = dataMap['timestamp'] as num?;
+
             if (rawFrame != null && rawFrame.isNotEmpty) {
               final parsedData =
                   rawFrame.map((e) => (e as num).toDouble()).toList();
-              
-              final dateTime = DateTime.fromMillisecondsSinceEpoch(
-                  timestampRaw.toInt());
-              
+
+              final dateTime = timestampRaw == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(timestampRaw.toInt());
+
               setState(() {
                 _thermalData = parsedData;
                 _lastTimestamp = dateTime;
                 _isConnected = true;
               });
-              
+
               _generateRawImage(parsedData);
             }
           } catch (e) {
@@ -97,7 +97,8 @@ class _ThermalViewScreenState extends State<ThermalViewScreen> {
       if (normalized < 0.5) {
         pixelColor = Color.lerp(Colors.blue, Colors.green, normalized * 2)!;
       } else {
-        pixelColor = Color.lerp(Colors.green, Colors.red, (normalized - 0.5) * 2)!;
+        pixelColor =
+            Color.lerp(Colors.green, Colors.red, (normalized - 0.5) * 2)!;
       }
 
       // Populate the RGBA array
@@ -132,13 +133,13 @@ class _ThermalViewScreenState extends State<ThermalViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double tMin = _thermalData.isNotEmpty ? _thermalData.reduce(min) : 20.0;
-    double tMax = _thermalData.isNotEmpty ? _thermalData.reduce(max) : 40.0;
-    double tAvg = _thermalData.isNotEmpty
+    final double? tMin =
+        _thermalData.isNotEmpty ? _thermalData.reduce(min) : null;
+    final double? tMax =
+        _thermalData.isNotEmpty ? _thermalData.reduce(max) : null;
+    final double? tAvg = _thermalData.isNotEmpty
         ? _thermalData.reduce((a, b) => a + b) / _thermalData.length
-        : 30.0;
-
-    if (tMax == tMin) tMax = tMin + 1;
+        : null;
 
     String timeString = '--';
     if (_lastTimestamp != null) {
@@ -187,13 +188,11 @@ class _ThermalViewScreenState extends State<ThermalViewScreen> {
                         image: _thermalImage,
                         fit: BoxFit.fill,
                         // Disabled interpolation for a raw pixel grid/chess pattern look
-                        filterQuality: FilterQuality.none, 
+                        filterQuality: FilterQuality.none,
                       ),
                     ),
             ),
-
             const SizedBox(height: 24),
-
             Text(
               'Sensor Diagnostics',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -201,7 +200,6 @@ class _ThermalViewScreenState extends State<ThermalViewScreen> {
                   ),
             ),
             const SizedBox(height: 12),
-
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -214,21 +212,21 @@ class _ThermalViewScreenState extends State<ThermalViewScreen> {
                   _InfoRow(
                     icon: Icons.local_fire_department,
                     label: 'Highest Temp',
-                    value: '${tMax.toStringAsFixed(1)} °C',
+                    value: '${tMax?.toStringAsFixed(1) ?? '--'} °C',
                     valueColor: Colors.redAccent,
                   ),
                   Divider(height: 24, color: context.extras.border),
                   _InfoRow(
                     icon: Icons.ac_unit,
                     label: 'Lowest Temp',
-                    value: '${tMin.toStringAsFixed(1)} °C',
+                    value: '${tMin?.toStringAsFixed(1) ?? '--'} °C',
                     valueColor: Colors.lightBlue,
                   ),
                   Divider(height: 24, color: context.extras.border),
                   _InfoRow(
                     icon: Icons.thermostat,
                     label: 'Average Temp',
-                    value: '${tAvg.toStringAsFixed(1)} °C',
+                    value: '${tAvg?.toStringAsFixed(1) ?? '--'} °C',
                     valueColor: Colors.greenAccent,
                   ),
                   Divider(height: 24, color: context.extras.border),
