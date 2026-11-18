@@ -78,42 +78,64 @@ class _ThermalViewScreenState extends State<ThermalViewScreen> {
   }
 
   Future<void> _generateRawImage(List<double> data) async {
-    if (data.length != 768) return;
+    const sourceWidth = 32;
+    const sourceHeight = 24;
+    const upscaleFactor = 4;
+    const frameWidth = (sourceWidth - 1) * upscaleFactor + 1;
+    const frameHeight = (sourceHeight - 1) * upscaleFactor + 1;
+    if (data.length != sourceWidth * sourceHeight) return;
 
-    double tMin = data.reduce(min);
+    final double tMin = data.reduce(min);
     double tMax = data.reduce(max);
-    if (tMax == tMin) tMax = tMin + 1; // Prevent division by zero
+    if (tMax == tMin) tMax = tMin + 1;
 
-    // Create a byte array for 32x24 pixels (4 bytes per pixel: R, G, B, A)
-    final Uint8List pixels = Uint8List(32 * 24 * 4);
+    final pixels = Uint8List(frameWidth * frameHeight * 4);
+    for (var y = 0; y < frameHeight; y++) {
+      final sourceY = y / upscaleFactor;
+      final y0 = sourceY.floor();
+      final y1 = min(y0 + 1, sourceHeight - 1);
+      final yWeight = sourceY - y0;
 
-    for (int i = 0; i < 768; i++) {
-      double t = data[i];
-      double normalized = (t - tMin) / (tMax - tMin);
-      normalized = normalized.clamp(0.0, 1.0);
+      for (var x = 0; x < frameWidth; x++) {
+        final sourceX = x / upscaleFactor;
+        final x0 = sourceX.floor();
+        final x1 = min(x0 + 1, sourceWidth - 1);
+        final xWeight = sourceX - x0;
 
-      // Color mapping
-      Color pixelColor;
-      if (normalized < 0.5) {
-        pixelColor = Color.lerp(Colors.blue, Colors.green, normalized * 2)!;
-      } else {
-        pixelColor =
-            Color.lerp(Colors.green, Colors.red, (normalized - 0.5) * 2)!;
+        final top = ui.lerpDouble(
+          data[y0 * sourceWidth + x0],
+          data[y0 * sourceWidth + x1],
+          xWeight,
+        )!;
+        final bottom = ui.lerpDouble(
+          data[y1 * sourceWidth + x0],
+          data[y1 * sourceWidth + x1],
+          xWeight,
+        )!;
+        final temperature = ui.lerpDouble(top, bottom, yWeight)!;
+        final normalized =
+            ((temperature - tMin) / (tMax - tMin)).clamp(0.0, 1.0).toDouble();
+
+        final Color pixelColor;
+        if (normalized < 0.5) {
+          pixelColor = Color.lerp(Colors.blue, Colors.green, normalized * 2)!;
+        } else {
+          pixelColor =
+              Color.lerp(Colors.green, Colors.red, (normalized - 0.5) * 2)!;
+        }
+
+        final offset = (y * frameWidth + x) * 4;
+        pixels[offset] = (pixelColor.r * 255.0).round().clamp(0, 255);
+        pixels[offset + 1] = (pixelColor.g * 255.0).round().clamp(0, 255);
+        pixels[offset + 2] = (pixelColor.b * 255.0).round().clamp(0, 255);
+        pixels[offset + 3] = 255;
       }
-
-      // Populate the RGBA array
-      final int offset = i * 4;
-      pixels[offset] = (pixelColor.r * 255.0).round().clamp(0, 255);
-      pixels[offset + 1] = (pixelColor.g * 255.0).round().clamp(0, 255);
-      pixels[offset + 2] = (pixelColor.b * 255.0).round().clamp(0, 255);
-      pixels[offset + 3] = 255; // Alpha (fully opaque)
     }
 
-    // Decode raw bytes into a Flutter Image
     ui.decodeImageFromPixels(
       pixels,
-      32, // MLX90640 width
-      24, // MLX90640 height
+      frameWidth,
+      frameHeight,
       ui.PixelFormat.rgba8888,
       (ui.Image img) {
         if (mounted) {
@@ -187,8 +209,7 @@ class _ThermalViewScreenState extends State<ThermalViewScreen> {
                       child: RawImage(
                         image: _thermalImage,
                         fit: BoxFit.fill,
-                        // Disabled interpolation for a raw pixel grid/chess pattern look
-                        filterQuality: FilterQuality.none,
+                        filterQuality: FilterQuality.medium,
                       ),
                     ),
             ),
