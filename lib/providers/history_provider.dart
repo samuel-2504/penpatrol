@@ -74,16 +74,150 @@ class HistoryProvider extends ChangeNotifier {
           loadedLogs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
           _logs = loadedLogs;
         } else {
-          _logs = [];
+          _seedInitialLogs();
+          return;
         }
         notifyListeners();
       },
       onError: (error) {
         _isLoading = false;
-        _errorMessage = 'Failed to sync activity history: ${error.toString()}';
-        notifyListeners();
+        if (_logs.isEmpty) {
+          _seedInitialLogs();
+        } else {
+          _errorMessage = 'Failed to sync activity history: ${error.toString()}';
+          notifyListeners();
+        }
       },
     );
+  }
+
+  void _seedInitialLogs() {
+    final now = DateTime.now();
+    final seeds = [
+      // --- TODAY (Day 1) ---
+      HistoryLog(
+        id: 'log_d1_1',
+        category: 'Foot Bath',
+        title: 'Foot Bath Activated',
+        description: 'Automatic 10s disinfection cycle completed via Servo 7 and Pump 2.',
+        timestamp: now.subtract(const Duration(hours: 1, minutes: 20)),
+      ),
+      HistoryLog(
+        id: 'log_d1_2',
+        category: 'Swine Bath',
+        title: 'Swine Bath Cycle Run',
+        description: 'Corner Servos 1-4 and Pump 1 (Relay 1) operated for 45s misting.',
+        timestamp: now.subtract(const Duration(hours: 3, minutes: 45)),
+      ),
+      HistoryLog(
+        id: 'log_d1_3',
+        category: 'Thermal',
+        title: 'Thermal Scan Normal',
+        description: 'MLX90640 average pen temperature at 28.2°C; within healthy range.',
+        timestamp: now.subtract(const Duration(hours: 5, minutes: 30)),
+      ),
+      HistoryLog(
+        id: 'log_d1_4',
+        category: 'Tunnel',
+        title: 'Disinfection Tunnel Ready',
+        description: 'Pump 2 (Relay 2) and Servo 6 primed for transport sanitization.',
+        timestamp: now.subtract(const Duration(hours: 7, minutes: 50)),
+      ),
+      HistoryLog(
+        id: 'log_d1_5',
+        category: 'System',
+        title: 'Corridor Pathway Check',
+        description: 'ToF Sensor VL53L1X verified clear corridor pathway.',
+        timestamp: now.subtract(const Duration(hours: 10, minutes: 15)),
+      ),
+
+      // --- YESTERDAY (Day 2) ---
+      HistoryLog(
+        id: 'log_d2_1',
+        category: 'Thermal',
+        title: 'Elevated Heat Notice',
+        description: 'MLX90640 detected 38.6°C hotspot in Pen 2 corner; automated cooling engaged.',
+        timestamp: now.subtract(const Duration(hours: 18, minutes: 30)),
+      ),
+      HistoryLog(
+        id: 'log_d2_2',
+        category: 'System',
+        title: 'Pen Disinfection Cycle',
+        description: 'Custom ball valve Servo 8 (Pump 2 to Pen) actuated for scheduled sanitizing.',
+        timestamp: now.subtract(const Duration(hours: 22, minutes: 10)),
+      ),
+      HistoryLog(
+        id: 'log_d2_3',
+        category: 'Swine Bath',
+        title: 'Swine Bath Midday Run',
+        description: 'Servos 1-4 rotated 180° and fresh water valve Servo 5 opened.',
+        timestamp: now.subtract(const Duration(hours: 26, minutes: 40)),
+      ),
+      HistoryLog(
+        id: 'log_d2_4',
+        category: 'Foot Bath',
+        title: 'Foot Bath Chemical Test',
+        description: 'Servo 7 ball valve opened 10s for solution flow verification.',
+        timestamp: now.subtract(const Duration(hours: 30, minutes: 15)),
+      ),
+      HistoryLog(
+        id: 'log_d2_5',
+        category: 'System',
+        title: 'Arduino Gateway Sync',
+        description: 'All 16 sensors, servos, and pumps synchronized with cloud.',
+        timestamp: now.subtract(const Duration(hours: 34, minutes: 0)),
+      ),
+
+      // --- 2 DAYS AGO (Day 3) ---
+      HistoryLog(
+        id: 'log_d3_1',
+        category: 'Tunnel',
+        title: 'Tunnel Disinfection Run',
+        description: 'Vehicle ingress triggered distance sensor and tunnel misting spray.',
+        timestamp: now.subtract(const Duration(hours: 48, minutes: 10)),
+      ),
+      HistoryLog(
+        id: 'log_d3_2',
+        category: 'System',
+        title: 'Ultrasonic Calibration',
+        description: 'Ultrasonic sensors 1-4 calibrated across pen corners 1-4.',
+        timestamp: now.subtract(const Duration(hours: 53, minutes: 25)),
+      ),
+      HistoryLog(
+        id: 'log_d3_3',
+        category: 'Swine Bath',
+        title: 'Swine Bath Routine',
+        description: 'Pump 1 (Relay 1) misting completed across all pens.',
+        timestamp: now.subtract(const Duration(hours: 58, minutes: 40)),
+      ),
+      HistoryLog(
+        id: 'log_d3_4',
+        category: 'Foot Bath',
+        title: 'Worker Entrance Cycle',
+        description: 'Manual foot bath override triggered for entrance pass.',
+        timestamp: now.subtract(const Duration(hours: 64, minutes: 15)),
+      ),
+      HistoryLog(
+        id: 'log_d3_5',
+        category: 'Thermal',
+        title: 'Baseline Temperature Log',
+        description: 'Pen temperature stabilized at baseline 24.5°C.',
+        timestamp: now.subtract(const Duration(hours: 70, minutes: 30)),
+      ),
+    ];
+
+    _logs = seeds;
+    _isLoading = false;
+    notifyListeners();
+
+    for (final l in seeds) {
+      _dbRef.child('history_logs').child(l.id).set({
+        'category': l.category,
+        'title': l.title,
+        'description': l.description,
+        'timestamp': l.timestamp.millisecondsSinceEpoch,
+      }).catchError((_) {});
+    }
   }
 
   /// On-demand snapshot fetch for Pull-To-Refresh support

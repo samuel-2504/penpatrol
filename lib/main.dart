@@ -11,7 +11,7 @@ import 'providers/spray_provider.dart';
 import 'providers/schedule_provider.dart';
 import 'providers/history_provider.dart';
 import 'theme/app_theme.dart';
-import 'screens/splash_screen.dart';
+import 'widgets/main_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,7 +62,7 @@ class PenPatrolApp extends StatelessWidget {
                 ),
               );
             },
-            home: const SplashScreen(),
+            home: const MainShell(),
           );
         },
       ),

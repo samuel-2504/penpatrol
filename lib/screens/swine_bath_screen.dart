@@ -94,7 +94,7 @@ class _ScheduleCard extends StatelessWidget {
     final border = context.extras.border;
 
     // Calculate dynamic servo degrees for display
-    final int servoAngle = ((schedule.intensity / 100.0) * 180.0).round();
+    final int servoAngle = ((schedule.intensity / 100.0) * 90.0).round();
 
     return Container(
       padding: const EdgeInsets.all(16),

@@ -55,7 +55,7 @@ class AppDrawer extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'AgroShield',
+                          'Pen Patrol',
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
@@ -146,7 +146,7 @@ class AppDrawer extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(20),
               child: Text(
-                '© 2025 AgroShield IoT',
+                '© 2025 Pen Patrol',
                 style: TextStyle(color: muted, fontSize: 11),
               ),
             ),

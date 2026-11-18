@@ -23,14 +23,6 @@ class DashboardScreen extends StatelessWidget {
     final alerts = context.watch<AlertsProvider>();
     final muted = context.extras.muted;
     final pad = Responsive.pagePadding(context);
-    final activeSensors = [
-      dash.mlx90640Conn,
-      dash.ultrasonic1Conn,
-      dash.ultrasonic2Conn,
-      dash.ultrasonic3Conn,
-      dash.ultrasonic4Conn,
-      dash.ultrasonic5Conn,
-    ].where((c) => c).length;
 
     return Scaffold(
       appBar: const TitleBar(
@@ -169,7 +161,7 @@ class DashboardScreen extends StatelessWidget {
                               Text(
                                 dash.footBathOn
                                     ? 'Active • ${dash.footBathRemainingSeconds}s remaining'
-                                    : 'Push button to run 10s cycle',
+                                    : 'Press to open 10s cycle',
                                 style: TextStyle(
                                   color: dash.footBathOn ? AppColors.teal : muted,
                                   fontSize: 13,
@@ -221,7 +213,7 @@ class DashboardScreen extends StatelessWidget {
                             )
                           : const Icon(Icons.touch_app_rounded, size: 18),
                       label: Text(
-                        isActive ? '${dash.footBathRemainingSeconds}s' : 'PUSH',
+                        isActive ? '${dash.footBathRemainingSeconds}s' : 'OPEN',
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.1,
@@ -233,201 +225,9 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
 
-            // --- SENSORS SECTION ---
+            // --- HARDWARE & ACTUATORS SECTION ---
             const SizedBox(height: 16),
-            _Card(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.teal.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.sensors_rounded,
-                              color: AppColors.teal,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Sensors',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '$activeSensors of 6 online',
-                                style: TextStyle(color: muted, fontSize: 13),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: (dash.sensorsStatus == 'READY'
-                                      ? AppColors.teal
-                                      : AppColors.amber)
-                                  .withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: (dash.sensorsStatus == 'READY'
-                                        ? AppColors.teal
-                                        : AppColors.amber)
-                                    .withValues(alpha: 0.4),
-                              ),
-                            ),
-                            child: Text(
-                              dash.sensorsStatus,
-                              style: TextStyle(
-                                color: dash.sensorsStatus == 'READY'
-                                    ? AppColors.teal
-                                    : AppColors.amber,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'monospace',
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          IconButton(
-                            icon: const Icon(Icons.arrow_forward_ios_rounded,
-                                size: 14),
-                            color: muted,
-                            tooltip: 'Sensor Diagnostics',
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SensorStatusScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Divider(color: context.extras.border, height: 1),
-                  const SizedBox(height: 8),
-                  if (Responsive.isMobile(context))
-                    Column(
-                      children: [
-                        _SensorTile(
-                          title: 'Thermal Camera',
-                          subtitle: 'MLX90640',
-                          isConnected: dash.mlx90640Conn,
-                          icon: Icons.videocam_rounded,
-                        ),
-                        _SensorTile(
-                          title: 'Ultrasonic Sensor 1',
-                          subtitle: 'Pen 1',
-                          isConnected: dash.ultrasonic1Conn,
-                          icon: Icons.sensors_rounded,
-                        ),
-                        _SensorTile(
-                          title: 'Ultrasonic Sensor 2',
-                          subtitle: 'Pen 2',
-                          isConnected: dash.ultrasonic2Conn,
-                          icon: Icons.sensors_rounded,
-                        ),
-                        _SensorTile(
-                          title: 'Ultrasonic Sensor 3',
-                          subtitle: 'Pen 3',
-                          isConnected: dash.ultrasonic3Conn,
-                          icon: Icons.sensors_rounded,
-                        ),
-                        _SensorTile(
-                          title: 'Ultrasonic Sensor 4',
-                          subtitle: 'Pen 4',
-                          isConnected: dash.ultrasonic4Conn,
-                          icon: Icons.sensors_rounded,
-                        ),
-                        _SensorTile(
-                          title: 'Ultrasonic Sensor 5',
-                          subtitle: 'Corridor',
-                          isConnected: dash.ultrasonic5Conn,
-                          icon: Icons.sensors_rounded,
-                        ),
-                      ],
-                    )
-                  else
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            children: [
-                              _SensorTile(
-                                title: 'Thermal Camera',
-                                subtitle: 'MLX90640',
-                                isConnected: dash.mlx90640Conn,
-                                icon: Icons.videocam_rounded,
-                              ),
-                              _SensorTile(
-                                title: 'Ultrasonic Sensor 1',
-                                subtitle: 'Pen 1',
-                                isConnected: dash.ultrasonic1Conn,
-                                icon: Icons.sensors_rounded,
-                              ),
-                              _SensorTile(
-                                title: 'Ultrasonic Sensor 2',
-                                subtitle: 'Pen 2',
-                                isConnected: dash.ultrasonic2Conn,
-                                icon: Icons.sensors_rounded,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              _SensorTile(
-                                title: 'Ultrasonic Sensor 3',
-                                subtitle: 'Pen 3',
-                                isConnected: dash.ultrasonic3Conn,
-                                icon: Icons.sensors_rounded,
-                              ),
-                              _SensorTile(
-                                title: 'Ultrasonic Sensor 4',
-                                subtitle: 'Pen 4',
-                                isConnected: dash.ultrasonic4Conn,
-                                icon: Icons.sensors_rounded,
-                              ),
-                              _SensorTile(
-                                title: 'Ultrasonic Sensor 5',
-                                subtitle: 'Corridor',
-                                isConnected: dash.ultrasonic5Conn,
-                                icon: Icons.sensors_rounded,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
+            const _HardwareSection(),
 
             // --- TEST SPRAY CARD ---
             const SizedBox(height: 16),
@@ -496,49 +296,70 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
 
+            // --- RECENT ALERTS (LAST 12 HOURS, MAX 5) ---
             const SizedBox(height: 16),
-            _Card(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Recent Alerts',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
+            Builder(builder: (context) {
+              final now = DateTime.now();
+              final recent12hAlerts = alerts.alerts.where((a) {
+                final diff = now.difference(a.timestamp);
+                return !diff.isNegative && diff.inHours <= 12;
+              }).take(5).toList();
+
+              return _Card(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Recent Alerts (Last 12 Hours)',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: (recent12hAlerts.isNotEmpty ? AppColors.amber : AppColors.teal)
+                                .withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${recent12hAlerts.length} recent',
+                            style: TextStyle(
+                              color: recent12hAlerts.isNotEmpty ? AppColors.amber : AppColors.teal,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
-                      ),
-                      Text(
-                        '${alerts.alerts.length}',
-                        style: TextStyle(color: muted, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (alerts.alerts.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Center(
-                        child: Column(
-                          children: [
-                            const Icon(Icons.check_circle_rounded,
-                                color: AppColors.teal, size: 36),
-                            const SizedBox(height: 8),
-                            Text('No active alerts',
-                                style: TextStyle(color: muted)),
-                          ],
+                          ),
                         ),
-                      ),
-                    )
-                  else
-                    ...alerts.alerts.take(3).map(
-                          (a) => _MiniAlertRow(alert: a),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (recent12hAlerts.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              const Icon(Icons.check_circle_rounded,
+                                  color: AppColors.teal, size: 36),
+                              const SizedBox(height: 8),
+                              Text('No alerts in the last 12 hours',
+                                  style: TextStyle(color: muted)),
+                            ],
+                          ),
                         ),
-                ],
-              ),
-            ),
+                      )
+                    else
+                      ...recent12hAlerts.map(
+                        (a) => _MiniAlertRow(alert: a),
+                      ),
+                  ],
+                ),
+              );
+            }),
             const SizedBox(height: 40),
           ],
         ),
@@ -548,18 +369,316 @@ class DashboardScreen extends StatelessWidget {
 }
 
 // ==========================================
-// INTERACTIVE SENSORS STATUS SCREEN
+// HARDWARE & ACTUATORS INTERACTIVE SECTION
+// ==========================================
+class _HardwareSection extends StatefulWidget {
+  const _HardwareSection();
+
+  @override
+  State<_HardwareSection> createState() => _HardwareSectionState();
+}
+
+class _HardwareSectionState extends State<_HardwareSection> {
+  int _tabIndex = 0; // 0: Sensors (6), 1: Servos (8), 2: Pumps (2)
+
+  @override
+  Widget build(BuildContext context) {
+    final dash = context.watch<DashboardProvider>();
+    final muted = context.extras.muted;
+    final totalOnline =
+        dash.onlineSensorsCount + dash.onlineServosCount + dash.onlinePumpsCount;
+
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.teal.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.settings_input_component_rounded,
+                      color: AppColors.teal,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hardware & Actuators',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$totalOnline of 16 online',
+                        style: TextStyle(color: muted, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: (dash.sensorsStatus == 'READY'
+                              ? AppColors.teal
+                              : AppColors.amber)
+                          .withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: (dash.sensorsStatus == 'READY'
+                                ? AppColors.teal
+                                : AppColors.amber)
+                            .withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Text(
+                      dash.sensorsStatus,
+                      style: TextStyle(
+                        color: dash.sensorsStatus == 'READY'
+                            ? AppColors.teal
+                            : AppColors.amber,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'monospace',
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios_rounded,
+                        size: 14),
+                    color: muted,
+                    tooltip: 'Hardware Diagnostics',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const SensorStatusScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Tab bar selector
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: context.extras.border.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                _buildTab(0, 'Sensors (${dash.onlineSensorsCount}/6)'),
+                const SizedBox(width: 4),
+                _buildTab(1, 'Servos (${dash.onlineServosCount}/8)'),
+                const SizedBox(width: 4),
+                _buildTab(2, 'Pumps (${dash.onlinePumpsCount}/2)'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Divider(color: context.extras.border, height: 1),
+          const SizedBox(height: 8),
+          if (_tabIndex == 0) _buildSensorsGrid(dash, context),
+          if (_tabIndex == 1) _buildServosGrid(dash, context),
+          if (_tabIndex == 2) _buildPumpsGrid(dash, context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTab(int index, String label) {
+    final isSelected = _tabIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _tabIndex = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.teal : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? Colors.white : context.extras.muted,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSensorsGrid(DashboardProvider dash, BuildContext context) {
+    final tiles = [
+      _SensorTile(
+        title: 'Thermal Camera',
+        subtitle: 'MLX90640',
+        isConnected: dash.mlx90640Conn,
+        icon: Icons.videocam_rounded,
+      ),
+      _SensorTile(
+        title: 'Ultrasonic Sensor 1',
+        subtitle: 'Pen 1',
+        isConnected: dash.ultrasonic1Conn,
+        icon: Icons.sensors_rounded,
+      ),
+      _SensorTile(
+        title: 'Ultrasonic Sensor 2',
+        subtitle: 'Pen 2',
+        isConnected: dash.ultrasonic2Conn,
+        icon: Icons.sensors_rounded,
+      ),
+      _SensorTile(
+        title: 'Ultrasonic Sensor 3',
+        subtitle: 'Pen 3',
+        isConnected: dash.ultrasonic3Conn,
+        icon: Icons.sensors_rounded,
+      ),
+      _SensorTile(
+        title: 'Ultrasonic Sensor 4',
+        subtitle: 'Pen 4',
+        isConnected: dash.ultrasonic4Conn,
+        icon: Icons.sensors_rounded,
+      ),
+      _SensorTile(
+        title: 'ToF Sensor VL53L1X',
+        subtitle: 'Corridor',
+        isConnected: dash.tofConn,
+        icon: Icons.sensors_rounded,
+      ),
+    ];
+    return _buildResponsiveGrid(context, tiles);
+  }
+
+  Widget _buildServosGrid(DashboardProvider dash, BuildContext context) {
+    final tiles = [
+      _SensorTile(
+        title: 'Corner Servo 1',
+        subtitle: 'Pen Corner 1',
+        isConnected: dash.servo1Conn,
+        icon: Icons.rotate_right_rounded,
+      ),
+      _SensorTile(
+        title: 'Corner Servo 2',
+        subtitle: 'Pen Corner 2',
+        isConnected: dash.servo2Conn,
+        icon: Icons.rotate_right_rounded,
+      ),
+      _SensorTile(
+        title: 'Corner Servo 3',
+        subtitle: 'Pen Corner 3',
+        isConnected: dash.servo3Conn,
+        icon: Icons.rotate_right_rounded,
+      ),
+      _SensorTile(
+        title: 'Corner Servo 4',
+        subtitle: 'Pen Corner 4',
+        isConnected: dash.servo4Conn,
+        icon: Icons.rotate_right_rounded,
+      ),
+      _SensorTile(
+        title: 'Servo 5 (Ball Valve)',
+        subtitle: 'Pump 1 to Pen',
+        isConnected: dash.servo5Conn,
+        icon: Icons.tune_rounded,
+      ),
+      _SensorTile(
+        title: 'Servo 6 (Ball Valve)',
+        subtitle: 'Pump 2 to Tunnel',
+        isConnected: dash.servo6Conn,
+        icon: Icons.tune_rounded,
+      ),
+      _SensorTile(
+        title: 'Servo 7 (Ball Valve)',
+        subtitle: 'Pump 2 to Foot Bath',
+        isConnected: dash.servo7Conn,
+        icon: Icons.tune_rounded,
+      ),
+      _SensorTile(
+        title: 'Servo 8 (Ball Valve)',
+        subtitle: 'Pump 2 to Pen Disinfection',
+        isConnected: dash.servo8Conn,
+        icon: Icons.tune_rounded,
+      ),
+    ];
+    return _buildResponsiveGrid(context, tiles);
+  }
+
+  Widget _buildPumpsGrid(DashboardProvider dash, BuildContext context) {
+    final tiles = [
+      _SensorTile(
+        title: 'Pump 1 (Relay 1)',
+        subtitle: 'Fresh Water to Pen',
+        isConnected: dash.pump1Conn,
+        icon: Icons.power_rounded,
+      ),
+      _SensorTile(
+        title: 'Pump 2 (Relay 2)',
+        subtitle: 'Disinfectant Supply',
+        isConnected: dash.pump2Conn,
+        icon: Icons.power_rounded,
+      ),
+    ];
+    return _buildResponsiveGrid(context, tiles);
+  }
+
+  Widget _buildResponsiveGrid(BuildContext context, List<Widget> items) {
+    if (Responsive.isMobile(context)) {
+      return Column(children: items);
+    }
+    final mid = (items.length / 2).ceil();
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: Column(children: items.sublist(0, mid))),
+        const SizedBox(width: 16),
+        Expanded(child: Column(children: items.sublist(mid))),
+      ],
+    );
+  }
+}
+
+// ==========================================
+// INTERACTIVE HARDWARE DIAGNOSTICS SCREEN
 // ==========================================
 class SensorStatusScreen extends StatelessWidget {
   const SensorStatusScreen({super.key});
 
-  Widget _buildSensorTile(BuildContext context, String title, bool isConnected) {
+  Widget _buildTile(BuildContext context, String title, String subtitle,
+      bool isConnected, IconData icon) {
     final muted = context.extras.muted;
     final color = isConnected ? AppColors.teal : AppColors.red;
-    
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: context.extras.card,
         borderRadius: BorderRadius.circular(12),
@@ -567,25 +686,75 @@ class SensorStatusScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            isConnected ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-            color: color,
-            size: 28,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                 ),
                 Text(
-                  isConnected ? 'Online & Active' : 'Offline / Disconnected',
+                  subtitle,
                   style: TextStyle(color: muted, fontSize: 13),
                 ),
               ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: color.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              isConnected ? 'ONLINE' : 'OFFLINE',
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'monospace',
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(
+      BuildContext context, String title, int count, int total) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 8, left: 4, right: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: AppColors.teal,
+            ),
+          ),
+          Text(
+            '$count of $total online',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: context.extras.muted,
             ),
           ),
         ],
@@ -598,11 +767,26 @@ class SensorStatusScreen extends StatelessWidget {
     final dash = context.watch<DashboardProvider>();
     final pad = Responsive.pagePadding(context);
 
+    final cornerServosOnline = [
+      dash.servo1Conn,
+      dash.servo2Conn,
+      dash.servo3Conn,
+      dash.servo4Conn,
+    ].where((c) => c).length;
+
+    final ballValvesOnline = [
+      dash.servo5Conn,
+      dash.servo6Conn,
+      dash.servo7Conn,
+      dash.servo8Conn,
+    ].where((c) => c).length;
+
     return Scaffold(
       appBar: TitleBar(
-        screenName: 'Sensor Diagnostics',
+        screenName: 'Hardware Diagnostics',
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: Colors.white, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -610,12 +794,49 @@ class SensorStatusScreen extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.all(pad),
           children: [
-            _buildSensorTile(context, 'Thermal Camera (MLX90640)', dash.mlx90640Conn),
-            _buildSensorTile(context, 'Ultrasonic Sensor 1 (Pen 1)', dash.ultrasonic1Conn),
-            _buildSensorTile(context, 'Ultrasonic Sensor 2 (Pen 2)', dash.ultrasonic2Conn),
-            _buildSensorTile(context, 'Ultrasonic Sensor 3 (Pen 3)', dash.ultrasonic3Conn),
-            _buildSensorTile(context, 'Ultrasonic Sensor 4 (Pen 4)', dash.ultrasonic4Conn),
-            _buildSensorTile(context, 'Ultrasonic Sensor 5 (Corridor)', dash.ultrasonic5Conn),
+            _buildSectionHeader(
+                context, 'Sensors & Detectors', dash.onlineSensorsCount, 6),
+            _buildTile(context, 'Thermal Camera', 'MLX90640 (32x24 Array)',
+                dash.mlx90640Conn, Icons.videocam_rounded),
+            _buildTile(context, 'Ultrasonic Sensor 1',
+                'Pen 1 Distance Monitor', dash.ultrasonic1Conn, Icons.sensors_rounded),
+            _buildTile(context, 'Ultrasonic Sensor 2',
+                'Pen 2 Distance Monitor', dash.ultrasonic2Conn, Icons.sensors_rounded),
+            _buildTile(context, 'Ultrasonic Sensor 3',
+                'Pen 3 Distance Monitor', dash.ultrasonic3Conn, Icons.sensors_rounded),
+            _buildTile(context, 'Ultrasonic Sensor 4',
+                'Pen 4 Distance Monitor', dash.ultrasonic4Conn, Icons.sensors_rounded),
+            _buildTile(context, 'ToF Sensor VL53L1X',
+                'Corridor Laser Ranging', dash.tofConn, Icons.sensors_rounded),
+
+            _buildSectionHeader(context, 'Corner Servos', cornerServosOnline, 4),
+            _buildTile(context, 'Corner Servo 1', 'Pen Corner 1 Actuator',
+                dash.servo1Conn, Icons.rotate_right_rounded),
+            _buildTile(context, 'Corner Servo 2', 'Pen Corner 2 Actuator',
+                dash.servo2Conn, Icons.rotate_right_rounded),
+            _buildTile(context, 'Corner Servo 3', 'Pen Corner 3 Actuator',
+                dash.servo3Conn, Icons.rotate_right_rounded),
+            _buildTile(context, 'Corner Servo 4', 'Pen Corner 4 Actuator',
+                dash.servo4Conn, Icons.rotate_right_rounded),
+
+            _buildSectionHeader(context, 'Ball Valve Servos (Solenoid Valves)',
+                ballValvesOnline, 4),
+            _buildTile(context, 'Servo 5 (Ball Valve)',
+                'Pump 1 to Pen (Fresh Water)', dash.servo5Conn, Icons.tune_rounded),
+            _buildTile(context, 'Servo 6 (Ball Valve)',
+                'Pump 2 to Tunnel Disinfection', dash.servo6Conn, Icons.tune_rounded),
+            _buildTile(context, 'Servo 7 (Ball Valve)',
+                'Pump 2 to Foot Bath', dash.servo7Conn, Icons.tune_rounded),
+            _buildTile(context, 'Servo 8 (Ball Valve)',
+                'Pump 2 to Pen Disinfection', dash.servo8Conn, Icons.tune_rounded),
+
+            _buildSectionHeader(
+                context, 'Pumps & Relays', dash.onlinePumpsCount, 2),
+            _buildTile(context, 'Pump 1 (Relay 1)',
+                'Pen Water Supply Pump', dash.pump1Conn, Icons.power_rounded),
+            _buildTile(context, 'Pump 2 (Relay 2)',
+                'Disinfection Supply Pump', dash.pump2Conn, Icons.power_rounded),
+            const SizedBox(height: 24),
           ],
         ),
       ),
