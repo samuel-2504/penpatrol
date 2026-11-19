@@ -45,6 +45,8 @@ class PenPatrolApp extends StatelessWidget {
           return MaterialApp(
             title: 'PenPatrol IoT',
             debugShowCheckedModeBanner: false,
+            scrollBehavior:
+                const MaterialScrollBehavior().copyWith(scrollbars: false),
             themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,

@@ -85,6 +85,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 child: SizedBox(
                   height: 36,
                   child: ListView.separated(
+                    primary: false,
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
                     scrollDirection: Axis.horizontal,
                     itemCount: _filters.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
