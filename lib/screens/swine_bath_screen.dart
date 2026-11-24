@@ -156,11 +156,15 @@ class _ScheduleCard extends StatelessWidget {
               children: [
                 Text(schedule.title,
                     style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 15)),
+                        fontWeight: FontWeight.w600, fontSize: 15),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
                 Text(
                   '${schedule.time} · ${schedule.selectedDays.join(", ")}',
                   style: TextStyle(color: muted, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -418,9 +422,16 @@ class _ScheduleFormState extends State<_ScheduleForm> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Water Pump & Servo Settings',
+                      Expanded(
+                        child: Text(
+                          'Water Pump & Servo Settings',
                           style: TextStyle(
-                              color: muted, fontWeight: FontWeight.bold)),
+                              color: muted, fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       Text('${_valveLevel.angle}° Servo',
                           style: const TextStyle(
                               color: AppColors.teal,

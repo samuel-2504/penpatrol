@@ -36,17 +36,21 @@ class CustomSlider extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: muted,
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: muted,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(width: 8),
             Text(
-              valueFormatter?.call(value) ??
-                  '${value.toStringAsFixed(0)}$unit',
+              valueFormatter?.call(value) ?? '${value.toStringAsFixed(0)}$unit',
               style: const TextStyle(
                 color: AppColors.yellow,
                 fontWeight: FontWeight.w700,
