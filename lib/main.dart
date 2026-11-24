@@ -12,13 +12,14 @@ import 'providers/schedule_provider.dart';
 import 'providers/history_provider.dart';
 import 'theme/app_theme.dart';
 import 'widgets/main_shell.dart';
+import 'screens/hardware_actuators_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Hide the top status bar and bottom navigation bar for immersive full screen
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -50,6 +51,9 @@ class PenPatrolApp extends StatelessWidget {
             themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
+            routes: {
+              '/hardware-actuators': (_) => const HardwareActuatorsScreen(),
+            },
             builder: (context, child) {
               final mq = MediaQuery.of(context);
               return MediaQuery(

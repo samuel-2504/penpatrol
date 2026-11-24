@@ -132,115 +132,6 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
 
-            // --- INITIATE FOOTBATH BUTTON CARD ---
-            const SizedBox(height: 16),
-            _Card(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColors.teal.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.water_drop_rounded,
-                              color: AppColors.teal),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Initiate Footbath',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                dash.footBathOn
-                                    ? 'Active • ${dash.footBathRemainingSeconds}s remaining'
-                                    : 'Press to open 10s cycle',
-                                style: TextStyle(
-                                  color:
-                                      dash.footBathOn ? AppColors.teal : muted,
-                                  fontSize: 13,
-                                  fontWeight: dash.footBathOn
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Builder(builder: (context) {
-                    final bool isActive = dash.footBathOn;
-
-                    return ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isActive
-                            ? AppColors.teal
-                            : AppColors.teal.withValues(alpha: 0.15),
-                        foregroundColor:
-                            isActive ? Colors.white : AppColors.teal,
-                        elevation: isActive ? 2 : 0,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(
-                            color: AppColors.teal
-                                .withValues(alpha: isActive ? 1.0 : 0.5),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      onPressed: () {
-                        if (isActive) {
-                          context.read<DashboardProvider>().stopFootBath();
-                        } else {
-                          context
-                              .read<DashboardProvider>()
-                              .triggerFootBath(seconds: 10);
-                        }
-                      },
-                      icon: isActive
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Icon(Icons.touch_app_rounded, size: 18),
-                      label: Text(
-                        isActive ? '${dash.footBathRemainingSeconds}s' : 'OPEN',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.1,
-                        ),
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-
-            // --- HARDWARE & ACTUATORS SECTION ---
-            const SizedBox(height: 16),
-            const _HardwareSection(),
-
             // --- TEST SPRAY CARD ---
             const SizedBox(height: 16),
             _Card(
@@ -393,14 +284,14 @@ class DashboardScreen extends StatelessWidget {
 // ==========================================
 // HARDWARE & ACTUATORS INTERACTIVE SECTION
 // ==========================================
-class _HardwareSection extends StatefulWidget {
-  const _HardwareSection();
+class HardwareSection extends StatefulWidget {
+  const HardwareSection({super.key});
 
   @override
-  State<_HardwareSection> createState() => _HardwareSectionState();
+  State<HardwareSection> createState() => _HardwareSectionState();
 }
 
-class _HardwareSectionState extends State<_HardwareSection> {
+class _HardwareSectionState extends State<HardwareSection> {
   int _tabIndex = 0; // 0: Sensors (6), 1: Servos (8), 2: Pumps (2)
 
   @override
@@ -481,20 +372,6 @@ class _HardwareSectionState extends State<_HardwareSection> {
                         letterSpacing: 0.5,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-                    color: muted,
-                    tooltip: 'Hardware Diagnostics',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SensorStatusScreen(),
-                        ),
-                      );
-                    },
                   ),
                 ],
               ),
@@ -682,196 +559,6 @@ class _HardwareSectionState extends State<_HardwareSection> {
         const SizedBox(width: 16),
         Expanded(child: Column(children: items.sublist(mid))),
       ],
-    );
-  }
-}
-
-// ==========================================
-// INTERACTIVE HARDWARE DIAGNOSTICS SCREEN
-// ==========================================
-class SensorStatusScreen extends StatelessWidget {
-  const SensorStatusScreen({super.key});
-
-  Widget _buildTile(BuildContext context, String title, String subtitle,
-      bool isConnected, IconData icon) {
-    final muted = context.extras.muted;
-    final color = isConnected ? AppColors.teal : AppColors.red;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.extras.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.extras.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 15),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(color: muted, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: color.withValues(alpha: 0.3)),
-            ),
-            child: Text(
-              isConnected ? 'ONLINE' : 'OFFLINE',
-              style: TextStyle(
-                color: color,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'monospace',
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(
-      BuildContext context, String title, int count, int total) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 8, left: 4, right: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-              color: AppColors.teal,
-            ),
-          ),
-          Text(
-            '$count of $total online',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: context.extras.muted,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final dash = context.watch<DashboardProvider>();
-    final pad = Responsive.pagePadding(context);
-
-    final cornerServosOnline = [
-      dash.servo1Conn,
-      dash.servo2Conn,
-      dash.servo3Conn,
-      dash.servo4Conn,
-    ].where((c) => c).length;
-
-    final ballValvesOnline = [
-      dash.servo5Conn,
-      dash.servo6Conn,
-      dash.servo7Conn,
-      dash.servo8Conn,
-    ].where((c) => c).length;
-
-    return Scaffold(
-      appBar: TitleBar(
-        screenName: 'Hardware Diagnostics',
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.white, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: ResponsiveScaffoldBody(
-        child: ListView(
-          padding: EdgeInsets.all(pad),
-          children: [
-            _buildSectionHeader(
-                context, 'Sensors & Detectors', dash.onlineSensorsCount, 6),
-            _buildTile(context, 'Thermal Camera', 'MLX90640 (32x24 Array)',
-                dash.mlx90640Conn, Icons.videocam_rounded),
-            _buildTile(context, 'Ultrasonic Sensor 1', 'Pen 1 Distance Monitor',
-                dash.ultrasonic1Conn, Icons.sensors_rounded),
-            _buildTile(context, 'Ultrasonic Sensor 2', 'Pen 2 Distance Monitor',
-                dash.ultrasonic2Conn, Icons.sensors_rounded),
-            _buildTile(context, 'Ultrasonic Sensor 3', 'Pen 3 Distance Monitor',
-                dash.ultrasonic3Conn, Icons.sensors_rounded),
-            _buildTile(context, 'Ultrasonic Sensor 4', 'Pen 4 Distance Monitor',
-                dash.ultrasonic4Conn, Icons.sensors_rounded),
-            _buildTile(context, 'ToF Sensor VL53L1X', 'Corridor Laser Ranging',
-                dash.tofConn, Icons.sensors_rounded),
-            _buildSectionHeader(
-                context, 'Corner Servos', cornerServosOnline, 4),
-            _buildTile(context, 'Corner Servo 1', 'Pen Corner 1 Actuator',
-                dash.servo1Conn, Icons.rotate_right_rounded),
-            _buildTile(context, 'Corner Servo 2', 'Pen Corner 2 Actuator',
-                dash.servo2Conn, Icons.rotate_right_rounded),
-            _buildTile(context, 'Corner Servo 3', 'Pen Corner 3 Actuator',
-                dash.servo3Conn, Icons.rotate_right_rounded),
-            _buildTile(context, 'Corner Servo 4', 'Pen Corner 4 Actuator',
-                dash.servo4Conn, Icons.rotate_right_rounded),
-            _buildSectionHeader(context, 'Ball Valve Servos (Solenoid Valves)',
-                ballValvesOnline, 4),
-            _buildTile(
-                context,
-                'Servo 5 (Ball Valve)',
-                'Pump 1 to Pen (Fresh Water)',
-                dash.servo5Conn,
-                Icons.tune_rounded),
-            _buildTile(
-                context,
-                'Servo 6 (Ball Valve)',
-                'Pump 2 to Tunnel Disinfection',
-                dash.servo6Conn,
-                Icons.tune_rounded),
-            _buildTile(context, 'Servo 7 (Ball Valve)', 'Pump 2 to Foot Bath',
-                dash.servo7Conn, Icons.tune_rounded),
-            _buildTile(
-                context,
-                'Servo 8 (Ball Valve)',
-                'Pump 2 to Pen Disinfection',
-                dash.servo8Conn,
-                Icons.tune_rounded),
-            _buildSectionHeader(
-                context, 'Pumps & Relays', dash.onlinePumpsCount, 2),
-            _buildTile(context, 'Pump 1 (Relay 1)', 'Pen Water Supply Pump',
-                dash.pump1Conn, Icons.power_rounded),
-            _buildTile(context, 'Pump 2 (Relay 2)', 'Disinfection Supply Pump',
-                dash.pump2Conn, Icons.power_rounded),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
     );
   }
 }

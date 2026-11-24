@@ -45,8 +45,10 @@ class ScheduleProvider extends ChangeNotifier {
               time: data['time']?.toString() ?? '08:00',
               selectedDays: List<String>.from(data['selectedDays'] ?? []),
               enabled: data['enabled'] as bool? ?? false,
-              intensity: (data['intensity'] as num?)?.toDouble() ?? 70.0,
-              duration: (data['duration'] as num?)?.toDouble() ?? 15.0,
+              intensity: (data['intensity'] as num?)?.toDouble() ??
+                  Schedule.defaultIntensity,
+              duration: (data['duration'] as num?)?.toDouble() ??
+                  Schedule.defaultDurationMinutes,
             ));
           }
         });
@@ -85,8 +87,10 @@ class ScheduleProvider extends ChangeNotifier {
               time: data['time']?.toString() ?? '08:00',
               selectedDays: List<String>.from(data['selectedDays'] ?? []),
               enabled: data['enabled'] as bool? ?? false,
-              intensity: (data['intensity'] as num?)?.toDouble() ?? 70.0,
-              duration: (data['duration'] as num?)?.toDouble() ?? 15.0,
+              intensity: (data['intensity'] as num?)?.toDouble() ??
+                  Schedule.defaultIntensity,
+              duration: (data['duration'] as num?)?.toDouble() ??
+                  Schedule.defaultDurationMinutes,
             ));
           }
         });
@@ -123,6 +127,24 @@ class ScheduleProvider extends ChangeNotifier {
     }
   }
 
+  /// Update an existing swine bath schedule in Firebase
+  Future<void> updateSchedule(Schedule schedule) async {
+    final Map<String, dynamic> scheduleData = {
+      'title': schedule.title,
+      'time': schedule.time,
+      'selectedDays': schedule.selectedDays,
+      'enabled': schedule.enabled,
+      'intensity': schedule.intensity,
+      'duration': schedule.duration,
+    };
+
+    await _dbRef.child('swine_bath_schedules/${schedule.id}').set(scheduleData);
+
+    if (schedule.enabled) {
+      await _syncHardwareControlNode(activeScheduleOverride: schedule);
+    }
+  }
+
   /// Delete schedule from Firebase
   Future<void> removeSchedule(String id) async {
     await _dbRef.child('swine_bath_schedules/$id').remove();
@@ -148,15 +170,18 @@ class ScheduleProvider extends ChangeNotifier {
 
   /// Syncs active schedule parameters directly to the Arduino node in Firebase
   /// Modifies `pump1_pen` (5V Relay) and `valve1_pen` (0-90° Servo on PCA9685)
-  Future<void> _syncHardwareControlNode() async {
-    final activeSchedule = _schedules.cast<Schedule?>().firstWhere(
-          (s) => s != null && s.enabled,
-          orElse: () => null,
-        );
+  Future<void> _syncHardwareControlNode(
+      {Schedule? activeScheduleOverride}) async {
+    final activeSchedule = activeScheduleOverride ??
+        _schedules.cast<Schedule?>().firstWhere(
+              (s) => s != null && s.enabled,
+              orElse: () => null,
+            );
 
     if (activeSchedule != null) {
       // Map Intensity (0 - 100%) to PCA9685 Servo Angle (0° to 90°)
-      final int servoAngle = ((activeSchedule.intensity / 100.0) * 90.0).round();
+      final int servoAngle =
+          ((activeSchedule.intensity / 100.0) * 90.0).round();
 
       await _dbRef.child('controls/swine_bath').set({
         'pump1_pen': true, // Turn ON 5V relay for pump

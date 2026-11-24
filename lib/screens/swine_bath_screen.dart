@@ -15,6 +15,29 @@ String _formatDuration(double minutes) {
   return '$minuteText:$secondText';
 }
 
+enum _ValveLevel {
+  low('Low', 35),
+  normal('Normal', 55),
+  high('High', 75);
+
+  const _ValveLevel(this.label, this.angle);
+
+  final String label;
+  final int angle;
+
+  double get intensity => angle / 90.0 * 100.0;
+
+  static _ValveLevel nearestToIntensity(double intensity) {
+    final angle = intensity / 100.0 * 90.0;
+    return values.reduce(
+      (closest, level) =>
+          (level.angle - angle).abs() < (closest.angle - angle).abs()
+              ? level
+              : closest,
+    );
+  }
+}
+
 class SwineBathScreen extends StatelessWidget {
   const SwineBathScreen({super.key});
 
@@ -30,7 +53,7 @@ class SwineBathScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.teal,
-        onPressed: () => _showAddScheduleSheet(context),
+        onPressed: () => _showScheduleSheet(context),
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: ResponsiveScaffoldBody(
@@ -68,7 +91,10 @@ class SwineBathScreen extends StatelessWidget {
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, i) {
                         final s = provider.schedules[i];
-                        return _ScheduleCard(schedule: s);
+                        return _ScheduleCard(
+                          schedule: s,
+                          onEdit: () => _showScheduleSheet(context, s),
+                        );
                       },
                     ),
         ),
@@ -76,7 +102,7 @@ class SwineBathScreen extends StatelessWidget {
     );
   }
 
-  void _showAddScheduleSheet(BuildContext context) {
+  void _showScheduleSheet(BuildContext context, [Schedule? schedule]) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -84,7 +110,7 @@ class SwineBathScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => const _AddScheduleForm(),
+      builder: (_) => _ScheduleForm(schedule: schedule),
     );
   }
 }
@@ -92,7 +118,9 @@ class SwineBathScreen extends StatelessWidget {
 // --- SCHEDULE CARD WIDGET ---
 class _ScheduleCard extends StatelessWidget {
   final Schedule schedule;
-  const _ScheduleCard({required this.schedule});
+  final VoidCallback onEdit;
+
+  const _ScheduleCard({required this.schedule, required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +164,7 @@ class _ScheduleCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Valve: $servoAngle° (${schedule.intensity.toStringAsFixed(0)}%) · Pump: ${_formatDuration(schedule.duration)}',
+                  'Valve: $servoAngle° · Pump: ${_formatDuration(schedule.duration)}',
                   style: const TextStyle(
                       color: AppColors.teal,
                       fontSize: 11,
@@ -152,6 +180,11 @@ class _ScheduleCard extends StatelessWidget {
             onChanged: (v) => provider.toggleEnabled(schedule.id, v),
           ),
           IconButton(
+            icon: Icon(Icons.edit_outlined, color: muted),
+            tooltip: 'Edit schedule',
+            onPressed: onEdit,
+          ),
+          IconButton(
             icon: Icon(Icons.delete_outline_rounded, color: muted),
             onPressed: () => provider.removeSchedule(schedule.id),
           ),
@@ -162,24 +195,53 @@ class _ScheduleCard extends StatelessWidget {
 }
 
 // --- FORM BOTTOM SHEET ---
-class _AddScheduleForm extends StatefulWidget {
-  const _AddScheduleForm();
+class _ScheduleForm extends StatefulWidget {
+  final Schedule? schedule;
+
+  const _ScheduleForm({this.schedule});
 
   @override
-  State<_AddScheduleForm> createState() => _AddScheduleFormState();
+  State<_ScheduleForm> createState() => _ScheduleFormState();
 }
 
-class _AddScheduleFormState extends State<_AddScheduleForm> {
+class _ScheduleFormState extends State<_ScheduleForm> {
   final _titleController = TextEditingController();
   TimeOfDay _time = const TimeOfDay(hour: 8, minute: 0);
   final List<String> _selectedDays = [];
-  double _intensity = 70.0;
-  double _duration = 15.0;
+  _ValveLevel _valveLevel = _ValveLevel.normal;
+  double _duration = 5.0;
   bool _isSaving = false;
 
   String? _errorMessage;
 
   static const _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  @override
+  void initState() {
+    super.initState();
+    final schedule = widget.schedule;
+    if (schedule != null) {
+      _titleController.text = schedule.title;
+      final timeParts = schedule.time.split(':');
+      if (timeParts.length == 2) {
+        final hour = int.tryParse(timeParts[0]);
+        final minute = int.tryParse(timeParts[1]);
+        if (hour != null &&
+            minute != null &&
+            hour >= 0 &&
+            hour < 24 &&
+            minute >= 0 &&
+            minute < 60) {
+          _time = TimeOfDay(hour: hour, minute: minute);
+        }
+      }
+      _selectedDays.addAll(schedule.selectedDays);
+      _valveLevel = _ValveLevel.nearestToIntensity(schedule.intensity);
+      _duration = schedule.duration
+          .clamp(Schedule.minDurationMinutes, Schedule.maxDurationMinutes)
+          .toDouble();
+    }
+  }
 
   @override
   void dispose() {
@@ -209,18 +271,25 @@ class _AddScheduleFormState extends State<_AddScheduleForm> {
     });
 
     try {
+      final existingSchedule = widget.schedule;
       final schedule = Schedule(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: existingSchedule?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text.trim(),
         time:
             '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}',
         selectedDays: List.from(_selectedDays),
-        intensity: _intensity,
+        intensity: _valveLevel.intensity,
         duration: _duration,
-        enabled: true, // Auto-enable newly added schedule
+        enabled: existingSchedule?.enabled ?? true,
       );
 
-      await context.read<ScheduleProvider>().addSchedule(schedule);
+      final provider = context.read<ScheduleProvider>();
+      if (existingSchedule == null) {
+        await provider.addSchedule(schedule);
+      } else {
+        await provider.updateSchedule(schedule);
+      }
 
       if (mounted) {
         Navigator.of(context).pop();
@@ -237,8 +306,6 @@ class _AddScheduleFormState extends State<_AddScheduleForm> {
   Widget build(BuildContext context) {
     final muted = context.extras.muted;
     final border = context.extras.border;
-    final int calculatedAngle = ((_intensity / 100.0) * 90.0).round();
-
     return Padding(
       padding: EdgeInsets.only(
         left: 20,
@@ -251,7 +318,10 @@ class _AddScheduleFormState extends State<_AddScheduleForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('New Swine Bath Schedule',
+            Text(
+                widget.schedule == null
+                    ? 'New Swine Bath Schedule'
+                    : 'Edit Swine Bath Schedule',
                 style: Theme.of(context)
                     .textTheme
                     .titleLarge
@@ -351,7 +421,7 @@ class _AddScheduleFormState extends State<_AddScheduleForm> {
                       Text('Water Pump & Servo Settings',
                           style: TextStyle(
                               color: muted, fontWeight: FontWeight.bold)),
-                      Text('$calculatedAngle° Servo',
+                      Text('${_valveLevel.angle}° Servo',
                           style: const TextStyle(
                               color: AppColors.teal,
                               fontWeight: FontWeight.bold,
@@ -359,23 +429,25 @@ class _AddScheduleFormState extends State<_AddScheduleForm> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  CustomSlider(
-                    label: 'Valve Intensity (5% steps)',
-                    value: _intensity,
-                    min: 0,
-                    max: 100,
-                    unit: '%',
-                    divisions: 20,
-                    onChanged: (val) => setState(() => _intensity = val),
+                  Wrap(
+                    spacing: 8,
+                    children: _ValveLevel.values.map((level) {
+                      return ChoiceChip(
+                        label: Text('${level.label} (${level.angle}°)'),
+                        selected: _valveLevel == level,
+                        selectedColor: AppColors.teal.withValues(alpha: 0.25),
+                        onSelected: (_) => setState(() => _valveLevel = level),
+                      );
+                    }).toList(),
                   ),
                   const SizedBox(height: 12),
                   CustomSlider(
-                    label: 'Pump Relay Duration (MM:SS, 30s steps)',
+                    label: 'Pump Relay Duration (1–10 min, 30s steps)',
                     value: _duration,
-                    min: 0.5,
-                    max: 30,
+                    min: Schedule.minDurationMinutes,
+                    max: Schedule.maxDurationMinutes,
                     unit: '',
-                    divisions: 59,
+                    divisions: 18,
                     valueFormatter: _formatDuration,
                     onChanged: (val) => setState(() => _duration = val),
                   ),
@@ -396,7 +468,10 @@ class _AddScheduleFormState extends State<_AddScheduleForm> {
                 onPressed: _isSaving ? null : _save,
                 child: _isSaving
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Save Schedule',
+                    : Text(
+                        widget.schedule == null
+                            ? 'Save Schedule'
+                            : 'Update Schedule',
                         style: TextStyle(
                             color: Colors.white, fontWeight: FontWeight.bold)),
               ),

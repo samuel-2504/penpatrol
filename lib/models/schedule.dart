@@ -1,4 +1,9 @@
 class Schedule {
+  static const minDurationMinutes = 1.0;
+  static const maxDurationMinutes = 10.0;
+  static const defaultDurationMinutes = 5.0;
+  static const defaultIntensity = 55 / 90 * 100;
+
   final String id;
   final String title;
   final String time;
@@ -12,8 +17,8 @@ class Schedule {
     required this.title,
     required this.time,
     required this.selectedDays,
-    this.intensity = 50.0,
-    this.duration = 10.0,
+    this.intensity = defaultIntensity,
+    this.duration = defaultDurationMinutes,
     this.enabled = true,
   });
 }

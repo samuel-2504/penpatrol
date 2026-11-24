@@ -55,8 +55,8 @@ class TitleBar extends StatelessWidget implements PreferredSizeWidget {
                     MaterialPageRoute(builder: (_) => const AlertsScreen()),
                   );
                 },
-                icon:
-                    const Icon(Icons.notifications_rounded, color: Colors.white),
+                icon: const Icon(Icons.notifications_rounded,
+                    color: Colors.white),
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.white.withValues(alpha: 0.08),
                   shape: const CircleBorder(),
@@ -83,6 +83,22 @@ class TitleBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ),
             ],
+          ),
+          const SizedBox(width: 8),
+        ],
+        if (screenName?.toLowerCase() != 'hardware & actuators') ...[
+          IconButton(
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/hardware-actuators'),
+            icon: const Icon(
+              Icons.settings_input_component_rounded,
+              color: Colors.white,
+            ),
+            tooltip: 'Hardware & Actuators',
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.08),
+              shape: const CircleBorder(),
+            ),
           ),
           const SizedBox(width: 8),
         ],
